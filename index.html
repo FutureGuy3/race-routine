@@ -21,7 +21,7 @@
 <style id="pageStyle">@page{size:A4 portrait;margin:12mm}</style>
 <style>
 /* =========================================================
-   Race Routine v3b
+   Race Routine v3c
    テーマはここで定義。新しいテーマを足すときは
    [data-theme="xxx"] ブロックと、JS の THEMES に1行追加。
    ========================================================= */
@@ -240,6 +240,7 @@ select.empty{color:var(--muted);font-family:"Zen Kaku Gothic New";font-size:14px
 .ev-sel{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.3fr) minmax(0,1fr);gap:6px}
 .ev-sel select{width:100%}
 
+.entry:not(.is-self) .subs{display:none}
 .subs{margin-top:10px;border-top:1px dashed var(--line);padding-top:9px}
 .subs > small{display:block;font-size:11px;color:var(--muted);letter-spacing:.06em;margin-bottom:6px}
 .sgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
@@ -518,7 +519,7 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:10px 16px 4
   </div>
 </div>
 
-<footer>RACE ROUTINE v3b — データはこのブラウザ内に自動保存されます</footer>
+<footer>RACE ROUTINE v3c — データはこのブラウザ内に自動保存されます</footer>
 
 <div class="tp-back" id="tp" hidden>
   <div class="tp-sheet" role="dialog" aria-modal="true" aria-label="時刻を設定">
@@ -912,7 +913,8 @@ function buildItems(){
     if (c.min == null) { if (name || e.name.trim()) undated.push(it); }
     else { it.min = c.min; it.time = fmt(c.min); it.est = c.exact && c.per != null; items.push(it); }
     // 種目ごとの準備スケジュール
-    e.subs.forEach((u, i) => {
+    // 準備スケジュールは自分の種目のみ（他の人の種目では入力欄も非表示）
+    if (isSelf(e)) e.subs.forEach((u, i) => {
       const m = toMin(u.time); const L = (labels.subs[i] || '').trim(); if (m == null || !L) return;
       items.push({ min:m, time:u.time, title:L, mine:isSelf(e),
                    icon:subIcon(L), kind:'sub', id:e.id, sid:u.id, rank:9.5, heat:+e.heat||0, lane:+e.lane||0 });
