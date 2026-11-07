@@ -21,7 +21,7 @@
 <style id="pageStyle">@page{size:A4 portrait;margin:12mm}</style>
 <style>
 /* =========================================================
-   Race Routine v2a
+   Race Routine v3
    テーマはここで定義。新しいテーマを足すときは
    [data-theme="xxx"] ブロックと、JS の THEMES に1行追加。
    ========================================================= */
@@ -107,6 +107,22 @@ button{cursor:pointer}
 .gbtn svg{width:16px;height:16px}
 .drawer textarea{width:100%;min-height:90px;resize:vertical;background:rgba(255,255,255,.94);color:#0c2533;border:none}
 .drawer textarea::placeholder{color:#6b7f8a}
+.lb-g{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.lb-h{flex:none;width:34px;font-size:12px;font-weight:700;opacity:.9}
+.lb-grid{flex:1;display:grid;gap:6px}
+.lb-grid.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.lb-grid.c5{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media (max-width:560px){.lb-grid.c5,.lb-grid.c4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.lb-grid input{width:100%;background:rgba(255,255,255,.94);color:#0c2533;border:none;padding:7px 9px;font-size:16px;border-radius:9px}
+.lb-grid input::placeholder{color:#8a9aa5;font-size:12px}
+.lb-note{font-size:11.5px;opacity:.85;margin-top:6px}
+.memo-row{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:6px 8px 6px 12px;margin-bottom:10px}
+.memo-row label{flex:none;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted)}
+.memo-row label svg{width:14px;height:14px;color:var(--accent)}
+.memo-row input{flex:1;background:var(--surface)}
+.sub-l{font-size:12.5px;font-weight:700;color:var(--muted);padding:2px 4px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vmemo{display:flex;align-items:flex-start;gap:6px;font-size:12.5px;color:var(--muted);margin-top:6px;white-space:pre-wrap;word-break:break-word}
+.vmemo svg{width:14px;height:14px;flex:none;margin-top:3px;color:var(--accent)}
 .rope{height:7px;border-radius:4px;margin-top:16px;position:relative;
   background:repeating-linear-gradient(90deg,var(--rope1) 0 16px,rgba(255,255,255,.95) 16px 20px,var(--rope2) 20px 36px,rgba(255,255,255,.95) 36px 40px);
   box-shadow:0 2px 6px rgba(0,0,0,.15)}
@@ -416,6 +432,17 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:10px 16px 4
         <div class="dr-t">REFLECTION　大会後の振り返り（ルーティンの感想）</div>
         <textarea data-meet="reflection" placeholder="例）アップ終了から1本目まで60分は長すぎた。次回はアップを20分遅らせる。"></textarea>
       </div>
+      <div>
+        <div class="dr-t">LABELS　予備項目名（新規でもリセットされません）</div>
+        <div class="lb-g"><span class="lb-h">朝</span><div class="lb-grid c4" id="lbMorning"></div></div>
+        <div class="lb-g"><span class="lb-h">会場</span><div class="lb-grid c4" id="lbVenue"></div></div>
+      </div>
+      <div>
+        <div class="dr-t">ENTRY ITEMS　出場種目の準備項目名（新規でもリセットされません）</div>
+        <div class="lb-grid c5" id="lbSubs"></div>
+        <div class="lb-note">項目名を空欄にすると、その項目は入力欄にもルーティンにも表示されません。</div>
+        <button class="gbtn" data-action="reset-labels" style="margin-top:10px">項目名を初期値に戻す</button>
+      </div>
       <input type="file" id="fileIn" accept=".json,application/json" hidden>
     </div>
 
@@ -475,7 +502,7 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:10px 16px 4
   </div>
 </div>
 
-<footer>RACE ROUTINE v2a — データはこのブラウザ内に自動保存されます</footer>
+<footer>RACE ROUTINE v3 — データはこのブラウザ内に自動保存されます</footer>
 
 <div class="tp-back" id="tp" hidden>
   <div class="tp-sheet" role="dialog" aria-modal="true" aria-label="時刻を設定">
@@ -516,7 +543,13 @@ const CONFIG = {
   relay:      { sexes:['M','W','X'], dists:['4x25','4x50','4x100','4x200'], strokes:['Fr','Med'] },
   sexLabel:   { M:'M', W:'W', X:'X' },   // X = 混合
   // 各種目に付く準備スケジュールの初期項目名（入力画面で変更可）
-  subItems: ['アップ','補食','トイレ','レース水着着用','招集']
+  labelsKey: 'race-routine-labels',
+  // 項目名の初期値（メニュー▼で編集。新規ボタンでもリセットされない）
+  defaultLabels: {
+    morning: ['予備1','予備2','予備3','予備4'],
+    venue:   ['予備1','予備2'],
+    subs:    ['アップ','補食','トイレ','水着着用','招集','予備1','予備2','予備3','予備4','予備5']
+  }
 };
 
 const THEMES = [
@@ -530,15 +563,23 @@ const THEMES = [
 /* 基本スケジュール項目（rank は同時刻のときの並び順） */
 const BASE = [
   { key:'wake',      label:'起床',             icon:'sun',   group:'朝',   rank:0 },
+  { key:'breakfast', label:'朝食',             icon:'meal',  group:'朝',   rank:0.5 },
   { key:'depart',    label:'出発',             icon:'go',    group:'朝',   rank:1 },
   { key:'gather',    label:'集合',             icon:'flag',  group:'朝',   rank:2 },
+  { key:'m1', spare:['morning',0], icon:'dot', group:'朝', rank:2.5 },
+  { key:'m2', spare:['morning',1], icon:'dot', group:'朝', rank:2.5 },
+  { key:'m3', spare:['morning',2], icon:'dot', group:'朝', rank:2.5 },
+  { key:'m4', spare:['morning',3], icon:'dot', group:'朝', rank:2.5 },
   { key:'arrive',    label:'会場到着',         icon:'pin',   group:'会場', rank:3.5, venue:true },
   { key:'open',      label:'開場',             icon:'door',  group:'会場', rank:4, venue:true },
   { key:'up',        label:'アップ',           icon:'wave',  group:'会場', rank:5, venue:true, range:true },
   { key:'dash',      label:'ダッシュ専用レーン', icon:'dash', group:'会場', rank:5.5, venue:true, range:true, dash:true },
   { key:'startPrac', label:'公式スタート練習', icon:'block', group:'会場', rank:6, venue:true, range:true },
   { key:'compStart', label:'競技開始',         icon:'bolt',  group:'会場', rank:7, venue:true },
-  { key:'lunch',     label:'昼休み',           icon:'cup',   group:'会場', rank:8, venue:true, range:true }
+  { key:'lunch',     label:'昼休み',           icon:'cup',   group:'会場', rank:8, venue:true, range:true },
+  { key:'compEnd',   label:'競技終了',         icon:'finish',group:'会場', rank:8.8, venue:true },
+  { key:'v1', spare:['venue',0], icon:'dot', group:'会場', rank:8.9, venue:true },
+  { key:'v2', spare:['venue',1], icon:'dot', group:'会場', rank:8.9, venue:true }
 ];
 
 const ICON = {
@@ -556,6 +597,9 @@ const ICON = {
   drop:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
   suit:'<path d="M8 3v3c0 2 1.8 3 4 3s4-1 4-3V3M8 6c-2 4-2 9 0 15h3l1-4 1 4h3c2-6 2-11 0-15"/>',
   dot:'<circle cx="12" cy="12" r="3"/>',
+  meal:'<path d="M3 12h18a9 9 0 0 1-18 0zM9 8c0-1.5 1.5-1.5 1.5-3M14 8c0-1.5 1.5-1.5 1.5-3"/>',
+  finish:'<path d="M5 21V4h14v9H5"/><path d="M5 4h4.7v4.5H5zM14.3 4H19v4.5h-4.7zM9.7 8.5h4.6V13H9.7z" fill="currentColor" stroke="none"/>',
+  note:'<path d="M5 3h10l4 4v14H5z"/><path d="M9 11h6M9 15h6"/>',
   dash:'<path d="M3 8h7M2 12h9M3 16h7M14 6l6 6-6 6"/>',
   camera:'<path d="M3 8h3l2-3h8l2 3h3v11H3z"/><circle cx="12" cy="13" r="3.5"/>',
   x:'<path d="M6 6l12 12M18 6 6 18"/>',
@@ -574,14 +618,28 @@ function subIcon(label){
 }
 
 /* =========================================================
+   項目名（端末ごとの設定。ルーティンデータとは別保存）
+   ========================================================= */
+const NSUB = CONFIG.defaultLabels.subs.length;
+function normLabels(x){
+  const d = CONFIG.defaultLabels, o = {};
+  for (const k of Object.keys(d)) o[k] = d[k].map((v, i) => (x && Array.isArray(x[k]) && typeof x[k][i] === 'string') ? x[k][i] : v);
+  return o;
+}
+let labels = (() => { try { return normLabels(JSON.parse(localStorage.getItem(CONFIG.labelsKey) || 'null')); } catch(e) { return normLabels(null); } })();
+function saveLabels(){ try { localStorage.setItem(CONFIG.labelsKey, JSON.stringify(labels)); } catch(e) {} }
+const baseLabel = b => b.spare ? (labels[b.spare[0]][b.spare[1]] || '').trim() : b.label;
+const baseVisible = b => !b.spare || !!baseLabel(b);
+
+/* =========================================================
    状態
    ========================================================= */
 const uid = () => Math.random().toString(36).slice(2, 9);
-const defaultSubs = () => CONFIG.subItems.map(label => ({ id:uid(), label, time:'' }));
+const defaultSubs = () => Array.from({ length:NSUB }, () => ({ id:uid(), time:'' }));
 function blankEntry(){ return { id:uid(), relay:false, camera:false, sex:'', dist:'', stroke:'', heat:'', lane:'', start:'', heats:'', next:'', name:'', subs:defaultSubs() }; }
 function blankState(){
   const base = {}; BASE.forEach(b => base[b.key] = blankBase(b));
-  return { app:'race-routine', v:2, meet:{ name:'', date:'', reflection:'' }, base,
+  return { app:'race-routine', v:2, meet:{ name:'', date:'', reflection:'', memo:'' }, base,
            transit:[{ id:uid(), time:'', memo:'' }], entries:[], custom:[] };
 }
 function blankBase(b){ return b.dash ? { s:'', e:'', has:false, perm:false } : { s:'', e:'' }; }
@@ -600,7 +658,7 @@ function normalize(d){
   const s = blankState();
   if (!d || typeof d !== 'object') return s;
   const str = v => (typeof v === 'string' || typeof v === 'number') ? String(v) : '';
-  if (d.meet) for (const k of ['name','date','reflection']) s.meet[k] = str(d.meet[k]);
+  if (d.meet) for (const k of ['name','date','reflection','memo']) s.meet[k] = str(d.meet[k]);
   if (d.base) BASE.forEach(b => { const v = d.base[b.key]; if (v) { s.base[b.key].s = str(v.s); s.base[b.key].e = str(v.e); if (b.dash) { s.base[b.key].perm = !!v.perm; s.base[b.key].has = !!v.has || s.base[b.key].perm; } } });
   if (Array.isArray(d.transit)) s.transit = d.transit.map(t => ({ id:uid(), time:str(t.time), memo:str(t.memo) }));
   if (Array.isArray(d.entries)) s.entries = d.entries.slice(0, CONFIG.maxEntries).map(x => {
@@ -612,7 +670,8 @@ function normalize(d){
       if (m) { e.sex = m[1].toUpperCase(); e.dist = m[2].toLowerCase(); e.stroke = m[3]; e.relay = /^4x/.test(e.dist); }
     }
     fixEvent(e);
-    if (Array.isArray(x.subs)) e.subs = x.subs.map(u => ({ id:uid(), label:str(u.label), time:str(u.time) }));
+    // 準備スケジュールは「何番目の項目か」で対応（項目名は端末の設定を使う）
+    if (Array.isArray(x.subs)) e.subs.forEach((u, i) => { const src = x.subs[i]; if (src) u.time = str(typeof src === 'object' ? src.time : src); });
     return e;
   });
   if (Array.isArray(d.custom)) s.custom = d.custom.map(c => ({ id:uid(), time:str(c.time), memo:str(c.memo) }));
@@ -670,28 +729,29 @@ const whoLabel = e => isSelf(e) ? CONFIG.selfLabel : e.name.trim();
    ========================================================= */
 const $ = s => document.querySelector(s);
 function dashCell(b){
-  const v = state.base[b.key];
+  const v = state.base[b.key]; const L = baseLabel(b);
   const times = v.perm
     ? `<div class="tin perm"><span>常設（時間帯の制限なし）</span><button class="iconbtn" data-action="clear-base" data-key="${b.key}" title="クリア" aria-label="クリア">${svg('x')}</button></div>`
     : `<div class="tin">
-        <input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-base="${b.key}" data-part="s" value="${esc(v.s)}" aria-label="${b.label} 開始">
+        <input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-base="${b.key}" data-part="s" value="${esc(v.s)}" aria-label="${esc(L)} 開始">
         <span class="dash">–</span>
-        <input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-base="${b.key}" data-part="e" value="${esc(v.e)}" aria-label="${b.label} 終了">
+        <input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-base="${b.key}" data-part="e" value="${esc(v.e)}" aria-label="${esc(L)} 終了">
         <button class="iconbtn" data-action="clear-base" data-key="${b.key}" title="クリア" aria-label="クリア">${svg('x')}</button></div>`;
   return `<div class="tcell range ${v.has ? 'filled' : 'off'}">
-    <div class="tlab">${svg(b.icon)}${b.label}
+    <div class="tlab">${svg(b.icon)}${L}
       <span class="dchk"><label><input type="checkbox" data-dash="has" ${v.has?'checked':''}>あり</label><label><input type="checkbox" data-dash="perm" ${v.perm?'checked':''}>常設</label></span></div>
     ${times}</div>`;
 }
 function tcell(b){
   if (b.dash) return dashCell(b);
-  const v = state.base[b.key];
+  if (!baseVisible(b)) return '';
+  const v = state.base[b.key]; const L = baseLabel(b);
   return `<div class="tcell ${b.range?'range':''} ${(v.s||v.e)?'filled':''}">
-    <label>${svg(b.icon)}${b.label}</label>
+    <label>${svg(b.icon)}${esc(L)}</label>
     <div class="tin">
-      <input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-base="${b.key}" data-part="s" value="${esc(v.s)}" aria-label="${b.label}${b.range?' 開始':''}">
-      ${b.range ? `<span class="dash">–</span><input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-base="${b.key}" data-part="e" value="${esc(v.e)}" aria-label="${b.label} 終了">` : ''}
-      <button class="iconbtn" data-action="clear-base" data-key="${b.key}" title="クリア" aria-label="${b.label}をクリア">${svg('x')}</button>
+      <input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-base="${b.key}" data-part="s" value="${esc(v.s)}" aria-label="${esc(L)}${b.range?' 開始':''}">
+      ${b.range ? `<span class="dash">–</span><input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-base="${b.key}" data-part="e" value="${esc(v.e)}" aria-label="${esc(L)} 終了">` : ''}
+      <button class="iconbtn" data-action="clear-base" data-key="${b.key}" title="クリア" aria-label="${esc(L)}をクリア">${svg('x')}</button>
     </div></div>`;
 }
 function renderBase(){
@@ -707,7 +767,9 @@ function renderBase(){
     <div class="grp"><div class="grp-t">MORNING　朝</div><div class="tgrid">${g1}</div></div>
     <div class="grp"><div class="grp-t">TRANSIT　移動</div>${tr}
       <button class="addbtn" data-action="add-transit">${svg('train')}乗り換え・交通を追加</button></div>
-    <div class="grp"><div class="grp-t">VENUE　会場</div><div class="tgrid">${g3}</div></div>`;
+    <div class="grp"><div class="grp-t">VENUE　会場</div>
+      <div class="memo-row"><label>${svg('note')}メモ</label><input type="text" data-meet="memo" value="${esc(state.meet.memo)}" placeholder="例）会場名・駐車場・観覧席の場所など"></div>
+      <div class="tgrid">${g3}</div></div>`;
 }
 function selectHTML(e, field, list, ph, labels){
   const v = e[field];
@@ -746,12 +808,12 @@ function entryCard(e, i){
     </div>
     <div class="calc" data-calc>${calcHTML(e)}</div>
     <div class="subs">
-      <small>この種目の準備スケジュール（項目名は変更できます）</small>
-      <div class="sgrid">${e.subs.map(u => `
+      <small>この種目の準備スケジュール（項目名はメニュー▼で編集）</small>
+      <div class="sgrid">${e.subs.map((u, i) => { const L = (labels.subs[i] || '').trim(); return L ? `
         <div class="sub ${u.time?'filled':''}">
-          <input type="text" data-sub="${e.id}" data-sid="${u.id}" data-field="label" value="${esc(u.label)}" aria-label="項目名" placeholder="項目名">
-          <input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-sub="${e.id}" data-sid="${u.id}" data-field="time" value="${esc(u.time)}" aria-label="${esc(u.label)}の時刻">
-        </div>`).join('')}</div>
+          <div class="sub-l">${esc(L)}</div>
+          <input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-sub="${e.id}" data-sid="${u.id}" data-field="time" value="${esc(u.time)}" aria-label="${esc(L)}の時刻">
+        </div>` : ''; }).join('')}</div>
     </div>
   </article>`;
 }
@@ -781,6 +843,12 @@ function renderDate(){
   const s = shortDate(state.meet.date), el = $('#dShow');
   el.textContent = s || '日付'; el.classList.toggle('ph', !s);
 }
+function renderLabels(){
+  const box = (k, ph) => labels[k].map((v, i) => `<input type="text" data-label="${k}" data-idx="${i}" value="${esc(v)}" placeholder="空欄＝非表示" aria-label="${ph}${i+1}">`).join('');
+  $('#lbMorning').innerHTML = box('morning', '朝の予備');
+  $('#lbVenue').innerHTML = box('venue', '会場の予備');
+  $('#lbSubs').innerHTML = box('subs', '準備項目');
+}
 function renderMeet(){
   document.querySelectorAll('[data-meet]').forEach(el => el.value = state.meet[el.dataset.meet] || '');
   renderDate();
@@ -793,10 +861,11 @@ function renderMeet(){
 function buildItems(){
   const items = [], undated = [];
   BASE.forEach(b => {
-    const v = state.base[b.key]; const s = toMin(v.s), e = toMin(v.e);
+    if (!baseVisible(b)) return;
+    const v = state.base[b.key]; const s = toMin(v.s), e = toMin(v.e); const L = baseLabel(b);
     if (b.dash) {
       if (!v.has) return;
-      const it = { title:b.label, icon:b.icon, kind:'base', key:b.key, rank:b.rank, venue:true };
+      const it = { title:baseLabel(b), icon:b.icon, kind:'base', key:b.key, rank:b.rank, venue:true };
       if (v.perm) {
         // 常設：アップ開始（なければ開場・会場到着）の位置に表示
         const a = [state.base.up.s, state.base.open.s, state.base.arrive.s].map(toMin).find(x => x != null);
@@ -807,8 +876,8 @@ function buildItems(){
       if (s == null && e == null) { undated.push({ ...it, meta:'あり（時間未入力）' }); return; }
     }
     if (s == null && e == null) return;
-    if (s == null) { items.push({ min:e, time:v.e, title:`${b.label} 終了`, icon:b.icon, kind:'base', key:b.key, rank:b.rank, venue:b.venue }); return; }
-    items.push({ min:s, time:v.s, end: b.range && e != null ? v.e : '', title:b.label, icon:b.icon, kind:'base', key:b.key, rank:b.rank, venue:b.venue });
+    if (s == null) { items.push({ min:e, time:v.e, title:`${L} 終了`, icon:b.icon, kind:'base', key:b.key, rank:b.rank, venue:b.venue }); return; }
+    items.push({ min:s, time:v.s, end: b.range && e != null ? v.e : '', title:L, icon:b.icon, kind:'base', key:b.key, rank:b.rank, venue:b.venue });
   });
   state.transit.forEach(t => {
     const s = toMin(t.time); if (s == null) { if (t.memo.trim()) undated.push({ title:t.memo, meta:'交通', icon:'train', kind:'transit', id:t.id }); return; }
@@ -827,10 +896,10 @@ function buildItems(){
     if (c.min == null) { if (name || e.name.trim()) undated.push(it); }
     else { it.min = c.min; it.time = fmt(c.min); it.est = c.exact && c.per != null; items.push(it); }
     // 種目ごとの準備スケジュール
-    e.subs.forEach(u => {
-      const m = toMin(u.time); if (m == null) return;
-      items.push({ min:m, time:u.time, title:u.label.trim() || '準備', mine:isSelf(e),
-                   icon:subIcon(u.label), kind:'sub', id:e.id, sid:u.id, rank:9.5, heat:+e.heat||0, lane:+e.lane||0 });
+    e.subs.forEach((u, i) => {
+      const m = toMin(u.time); const L = (labels.subs[i] || '').trim(); if (m == null || !L) return;
+      items.push({ min:m, time:u.time, title:L, mine:isSelf(e),
+                   icon:subIcon(L), kind:'sub', id:e.id, sid:u.id, rank:9.5, heat:+e.heat||0, lane:+e.lane||0 });
     });
   });
   items.sort((a,b) => Math.floor(a.min) - Math.floor(b.min) || a.min - b.min || a.rank - b.rank || (a.heat - b.heat) || (a.lane - b.lane));
@@ -865,6 +934,7 @@ function renderTimeline(){
     <div class="kick">RACE DAY ROUTINE</div>
     <h3>${esc(m.name) || '<span style="color:var(--muted);font-weight:500">大会名 未入力</span>'}</h3>
     <div class="date">${dateLabel(m.date) || '日付 未入力'}</div>
+    ${m.memo.trim() ? `<div class="vmemo">${svg('note')}<span>${esc(m.memo)}</span></div>` : ''}
     <div class="stats">
       <div class="stat"><small>起床</small><b>${wake || '--:--'}</b></div>
       <div class="stat hl"><small>自分の初レース</small><b>${selfItems[0] ? selfItems[0].time : '--:--'}</b></div>
@@ -907,6 +977,7 @@ function buildText(){
   const m = state.meet, L = [];
   L.push(`🏊 Race Routine｜${m.name || '（大会名未入力）'}`);
   if (m.date) L.push(dateLabel(m.date));
+  if (m.memo.trim()) L.push(`📝 ${m.memo.trim()}`);
   L.push('────────────');
   const line = it => {
     let t = it.title;
@@ -944,7 +1015,8 @@ function exportJSON(){
   data.exportedAt = new Date().toISOString();
   const strip = a => a.map(({id, ...r}) => r);
   data.transit = strip(data.transit); data.custom = strip(data.custom);
-  data.entries = data.entries.map(({id, subs, ...r}) => ({ ...r, event:evName(r), subs:strip(subs) }));
+  data.entries = data.entries.map(({id, subs, ...r}) => ({ ...r, event:evName(r), subs:subs.map((u, i) => ({ label:labels.subs[i], time:u.time })) }));
+  data.labels = labels;
   const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
   const safe = (state.meet.name || 'routine').replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 40);
   const a = document.createElement('a');
@@ -955,7 +1027,7 @@ function exportJSON(){
   toast('ファイルに書き出しました');
 }
 function hasData(){
-  return !!(state.meet.name || state.entries.length || state.custom.length || BASE.some(b => state.base[b.key].s || state.base[b.key].e || state.base[b.key].has) || state.transit.some(t => t.time || t.memo));
+  return !!(state.meet.name || state.meet.memo || state.entries.length || state.custom.length || BASE.some(b => state.base[b.key].s || state.base[b.key].e || state.base[b.key].has) || state.transit.some(t => t.time || t.memo));
 }
 $('#fileIn').addEventListener('change', ev => {
   const f = ev.target.files[0]; ev.target.value = '';
@@ -966,6 +1038,10 @@ $('#fileIn').addEventListener('change', ev => {
       const d = JSON.parse(r.result);
       if (!d || d.app !== 'race-routine') throw new Error();
       if (hasData() && !confirm('現在のルーティンを読み込んだ内容で置き換えます。よろしいですか？')) return;
+      if (d.labels && JSON.stringify(normLabels(d.labels)) !== JSON.stringify(labels)
+          && confirm('このファイルの項目名（予備項目・種目の準備項目）も読み込みますか？\nキャンセルすると今の項目名のままにします。')) {
+        labels = normLabels(d.labels); saveLabels(); renderLabels();
+      }
       snapshot(); state = normalize(d); save(); renderAll();
       toast('ルーティンを読み込みました', true);
     } catch(e) { toast('Race Routine のファイルではないようです'); }
@@ -987,6 +1063,10 @@ const SAMPLE = {
  "base": {
   "wake": {
    "s": "05:30",
+   "e": ""
+  },
+  "breakfast": {
+   "s": "05:50",
    "e": ""
   },
   "depart": {
@@ -1021,6 +1101,10 @@ const SAMPLE = {
   },
   "compStart": {
    "s": "09:30",
+   "e": ""
+  },
+  "compEnd": {
+   "s": "15:00",
    "e": ""
   },
   "lunch": {
@@ -1258,6 +1342,10 @@ function findList(name, id){ return state[name].find(x => x.id === id); }
 
 document.addEventListener('input', ev => {
   const el = ev.target;
+  if (el.dataset.label) {
+    labels[el.dataset.label][+el.dataset.idx] = el.value; saveLabels();
+    renderBase(); renderEntries(); renderTimeline(); return;
+  }
   if (el.dataset.meet) {
     state.meet[el.dataset.meet] = el.value;
     if (el.dataset.meet === 'reflection') $('#menuBtn').classList.toggle('has', !!el.value.trim());
@@ -1334,6 +1422,10 @@ document.addEventListener('click', ev => {
     case 'export': exportJSON(); break;
     case 'import': $('#fileIn').click(); break;
     case 'print-menu': $('#pr').hidden = false; break;
+    case 'reset-labels':
+      if (!confirm('予備項目名と準備項目名を初期値に戻します。よろしいですか？')) return;
+      labels = normLabels(null); saveLabels(); renderLabels(); renderBase(); renderEntries(); renderTimeline();
+      toast('項目名を初期値に戻しました'); break;
     case 'new':
       if (hasData() && !confirm('新しいルーティンを作成します。現在の内容は消えます（必要なら先に書き出しを）。')) return;
       snapshot(); state = blankState(); save(); renderAll(); toast('新規ルーティンを作成しました', true); break;
@@ -1355,7 +1447,7 @@ document.addEventListener('click', ev => {
       if (state.entries.length >= CONFIG.maxEntries) { toast(`種目は最大${CONFIG.maxEntries}件です`); return; }
       const i = state.entries.findIndex(x => x.id === b.dataset.id); if (i < 0) return;
       const src = state.entries[i];
-      const copy = { ...src, id:uid(), camera:false, heat:'', lane:'', name:'', subs: src.subs.map(u => ({ id:uid(), label:u.label, time:'' })) };
+      const copy = { ...src, id:uid(), camera:false, heat:'', lane:'', name:'', subs: defaultSubs() };
       state.entries.splice(i + 1, 0, copy); save(); renderEntries(); renderTimeline();
       const el = document.querySelector(`[data-entry="${copy.id}"] [data-field="heat"]`); el && el.focus();
       toast('種目を複製しました（組・レーン・名前を入力）'); break;
@@ -1370,11 +1462,11 @@ document.addEventListener('click', ev => {
 function deleteItem(kind, id, key, sid){
   snapshot();
   let label = '';
-  if (kind === 'base') { const bd = BASE.find(b => b.key === key); label = bd.label; state.base[key] = blankBase(bd); }
+  if (kind === 'base') { const bd = BASE.find(b => b.key === key); label = baseLabel(bd); state.base[key] = blankBase(bd); }
   else if (kind === 'transit') { state.transit = state.transit.filter(x => x.id !== id); label = '交通'; }
   else if (kind === 'custom') { state.custom = state.custom.filter(x => x.id !== id); label = '予定'; }
   else if (kind === 'entry') { const e = findList('entries', id); label = (e && evName(e)) || '種目'; state.entries = state.entries.filter(x => x.id !== id); }
-  else if (kind === 'sub') { const e = findList('entries', id); const u = e && e.subs.find(x => x.id === sid); if (u) { label = u.label || '準備'; u.time = ''; } }
+  else if (kind === 'sub') { const e = findList('entries', id); const i = e ? e.subs.findIndex(x => x.id === sid) : -1; if (i >= 0) { label = labels.subs[i] || '準備'; e.subs[i].time = ''; } }
   save(); renderAll(false);
   toast(`「${label}」を削除しました`, true);
 }
@@ -1486,7 +1578,7 @@ function setTab(t){
    初期化
    ========================================================= */
 function renderAll(withMeet = true){
-  if (withMeet) renderMeet();
+  if (withMeet) { renderMeet(); renderLabels(); }
   renderBase(); renderEntries(); renderCustom(); renderTimeline();
 }
 (function init(){
