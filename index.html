@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="pool">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Race Routine</title>
+<meta name="description" content="競泳大会当日のルーティンを時系列で作成するアプリ">
+<meta name="theme-color" content="#0098bd">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;1,700;1,800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style id="pageStyle">@page{size:A4 portrait;margin:12mm}</style>
+<style>
+/* =========================================================
+   Race Routine v2
+   テーマはここで定義。新しいテーマを足すときは
+   [data-theme="xxx"] ブロックと、JS の THEMES に1行追加。
+   ========================================================= */
+:root, [data-theme="pool"]{
+  --bg:#eef5f8; --surface:#ffffff; --surface2:#f4f9fb; --ink:#0c2533; --muted:#5d7584; --line:#d9e6ec;
+  --accent:#0098bd; --accent2:#ff5a36; --accent-ink:#ffffff; --badge-ink:#ffffff;
+  --hero:linear-gradient(135deg,#0089ad 0%,#00b4c6 55%,#5fd9cf 100%);
+  --rope1:#ff5a36; --rope2:#1d4f91; --self-bg:#e3f5fa; --scheme:light;
+}
+[data-theme="night"]{
+  --bg:#06111c; --surface:#0d1f30; --surface2:#11283c; --ink:#e7f2f8; --muted:#8aa5b8; --line:#1d3a52;
+  --accent:#35e0ff; --accent2:#ff4f8b; --accent-ink:#04121d; --badge-ink:#ffffff;
+  --hero:linear-gradient(135deg,#0a2443 0%,#0c3b5c 55%,#0f6075 100%);
+  --rope1:#ff4f8b; --rope2:#35e0ff; --self-bg:#0f3247; --scheme:dark;
+}
+[data-theme="sunset"]{
+  --bg:#fdf3ec; --surface:#ffffff; --surface2:#fff8f3; --ink:#33201b; --muted:#8a6a5f; --line:#f1dccf;
+  --accent:#ee5a32; --accent2:#2b6be0; --accent-ink:#ffffff; --badge-ink:#ffffff;
+  --hero:linear-gradient(135deg,#ff8a4c 0%,#ff5f6d 55%,#c24f98 100%);
+  --rope1:#2b6be0; --rope2:#ffc23d; --self-bg:#fff0e8; --scheme:light;
+}
+[data-theme="lagoon"]{
+  --bg:#edf9f4; --surface:#ffffff; --surface2:#f3fbf8; --ink:#0d2a24; --muted:#5b7d74; --line:#d3ece3;
+  --accent:#0e9f7e; --accent2:#ff7a59; --accent-ink:#ffffff; --badge-ink:#ffffff;
+  --hero:linear-gradient(135deg,#0b8f72 0%,#25bf9b 55%,#8ee0c1 100%);
+  --rope1:#ff7a59; --rope2:#0b5f8f; --self-bg:#e2f6ee; --scheme:light;
+}
+[data-theme="mono"]{
+  --bg:#f2f2ef; --surface:#ffffff; --surface2:#f7f7f4; --ink:#121212; --muted:#6b6b66; --line:#e1e1dc;
+  --accent:#121212; --accent2:#d4f522; --accent-ink:#ffffff; --badge-ink:#121212;
+  --hero:linear-gradient(135deg,#0f0f0f 0%,#262626 60%,#3a3a3a 100%);
+  --rope1:#d4f522; --rope2:#ffffff; --self-bg:#f4fbd0; --scheme:light;
+}
+
+*{box-sizing:border-box}
+html{color-scheme:var(--scheme)}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Zen Kaku Gothic New",system-ui,-apple-system,"Hiragino Sans","Yu Gothic UI",sans-serif;
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  transition:background .3s,color .3s;
+}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+.t,input.tinput{font-family:"Barlow Condensed","Zen Kaku Gothic New",sans-serif;font-variant-numeric:tabular-nums}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+
+/* ---------- Hero ---------- */
+.hero{background:var(--hero);color:#fff;position:relative;overflow:hidden;padding:14px 0 54px}
+.hero::before{content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(60% 40% at 15% 20%,rgba(255,255,255,.18),transparent 60%),
+    radial-gradient(40% 30% at 85% 70%,rgba(255,255,255,.12),transparent 60%),
+    repeating-linear-gradient(115deg,rgba(255,255,255,.05) 0 2px,transparent 2px 22px);
+  pointer-events:none}
+.hero-top{position:relative;display:flex;align-items:center;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand-mark{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.18);display:grid;place-items:center;flex:none}
+.brand-name{font-family:"Barlow Condensed",sans-serif;font-style:italic;font-weight:800;font-size:28px;letter-spacing:.02em;line-height:1;white-space:nowrap}
+.brand-sub{font-size:11px;opacity:.85;letter-spacing:.12em;white-space:nowrap}
+.menu-btn{width:36px;height:36px;border-radius:11px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.14);color:#fff;display:grid;place-items:center;flex:none;position:relative}
+.menu-btn svg{width:18px;height:18px;transition:transform .25s}
+.menu-btn[aria-expanded="true"] svg{transform:rotate(180deg)}
+.menu-btn.has::after{content:"";position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:var(--rope1);border:2px solid #fff}
+.new-btn{height:36px;border-radius:11px;border:none;background:rgba(255,255,255,.95);color:#0c2533;font-weight:700;font-size:13px;padding:0 13px;display:flex;align-items:center;gap:4px;flex:none}
+.new-btn svg{width:15px;height:15px}
+@media (max-width:480px){.brand-sub{display:none}.brand-name{font-size:21px}.brand-mark{width:32px;height:32px}.brand{gap:8px}.hero-top{gap:8px}}
+
+.drawer{position:relative;margin-top:14px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.28);border-radius:18px;padding:14px;display:grid;gap:14px;animation:drop .22s ease-out}
+.drawer[hidden]{display:none}
+@keyframes drop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.dr-t{font-size:11px;letter-spacing:.14em;opacity:.9;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.dr-t .tn{font-family:"Barlow Condensed";font-style:italic;letter-spacing:.08em;font-size:13px;opacity:.9}
+.themes{display:flex;gap:10px;flex-wrap:wrap}
+.swatch{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,.5);padding:0;position:relative;overflow:hidden;transition:transform .15s}
+.swatch:hover{transform:scale(1.08)}
+.swatch[aria-pressed="true"]{border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.35)}
+.swatch span{position:absolute;inset:0}
+.dr-actions{display:flex;gap:8px;flex-wrap:wrap}
+.gbtn{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.12);color:#fff;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:500}
+.gbtn:hover{background:rgba(255,255,255,.24)}
+.gbtn.solid{background:#fff;color:#0c2533;border-color:#fff;font-weight:700}
+.gbtn svg{width:16px;height:16px}
+.drawer textarea{width:100%;min-height:90px;resize:vertical;background:rgba(255,255,255,.94);color:#0c2533;border:none}
+.drawer textarea::placeholder{color:#6b7f8a}
+.rope{height:7px;border-radius:4px;margin-top:16px;position:relative;
+  background:repeating-linear-gradient(90deg,var(--rope1) 0 16px,rgba(255,255,255,.95) 16px 20px,var(--rope2) 20px 36px,rgba(255,255,255,.95) 36px 40px);
+  box-shadow:0 2px 6px rgba(0,0,0,.15)}
+
+/* ---------- Meet (1行) ---------- */
+.meet{position:relative;margin-top:-38px;background:var(--surface);border-radius:18px;padding:10px 12px 10px 16px;
+  box-shadow:0 10px 30px rgba(10,40,60,.10);border:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.meet-name{flex:1;min-width:0;border:none;background:transparent;font-size:20px;font-weight:700;padding:6px 0;border-bottom:2px solid transparent;outline:none;border-radius:0}
+.meet-name:focus{border-bottom-color:var(--accent)}
+.meet-name::placeholder{color:var(--muted);opacity:.6}
+.dchip{position:relative;flex:none;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:5px 12px;min-width:88px;text-align:center;cursor:pointer}
+.dchip span{font-family:"Barlow Condensed";font-size:21px;font-weight:600;letter-spacing:.02em}
+.dchip span.ph{font-family:"Zen Kaku Gothic New";font-size:13px;color:var(--muted);font-weight:500;line-height:31px}
+.dchip input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0;margin:0}
+@media (max-width:480px){.meet-name{font-size:17px}}
+
+/* ---------- Inputs ---------- */
+input[type="text"],input.tinput,input[type="date"],input[type="number"],textarea,select{
+  border:1px solid var(--line);background:var(--surface2);border-radius:10px;padding:9px 11px;font-size:16px;outline:none;
+  transition:border-color .15s,box-shadow .15s;min-width:0}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+input.tinput{font-size:19px;font-weight:600;padding:6px 10px;letter-spacing:.02em}
+input[type="number"]{text-align:center}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:.65}
+select{appearance:none;-webkit-appearance:none;font-family:"Barlow Condensed","Zen Kaku Gothic New",sans-serif;font-weight:600;font-size:18px;padding:7px 24px 7px 10px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a9aa5' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center}
+select.empty{color:var(--muted);font-family:"Zen Kaku Gothic New";font-size:14px;font-weight:500}
+
+/* ---------- Layout ---------- */
+.tabs{display:none;margin:16px 0 0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px}
+.tabs button{flex:1;border:none;background:transparent;border-radius:10px;padding:10px;font-weight:700;font-size:14px;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+.tabs .cnt{font-family:"Barlow Condensed";font-size:15px;margin-left:4px;opacity:.85}
+.layout{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:22px;margin:20px auto 40px;align-items:start}
+.panel-out{position:sticky;top:14px}
+@media (max-width:900px){
+  .tabs{display:flex}
+  .layout{grid-template-columns:1fr;margin-top:14px}
+  .panel-out{position:static}
+  body[data-tab="in"] .panel-out{display:none}
+  body[data-tab="out"] .panel-in{display:none}
+}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:18px}
+.card-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px}
+.card-h h2{margin:0;font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.card-h h2 .en{font-family:"Barlow Condensed";font-style:italic;font-weight:700;font-size:13px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase}
+.card-h .hint{font-size:12px;color:var(--muted)}
+.grp{margin-bottom:14px}
+.grp:last-child{margin-bottom:0}
+.grp-t{font-size:11px;letter-spacing:.14em;color:var(--muted);font-weight:700;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.grp-t::after{content:"";flex:1;height:1px;background:var(--line)}
+
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:10px}
+.tcell{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:8px 10px 9px;position:relative}
+.tcell.range{grid-column:span 2}
+.tcell > label,.tcell .tlab{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:4px}
+.tcell .tlab svg,.tcell > label svg{width:14px;height:14px;color:var(--accent)}
+.tcell .tin{display:flex;align-items:center;gap:6px}
+.tcell input.tinput{background:var(--surface);flex:1;width:100%}
+.tcell .dash{color:var(--muted);font-weight:700}
+.tcell.off{opacity:.62}.tcell.off:focus-within{opacity:1}
+.dchk{margin-left:auto;display:flex;gap:10px}
+.dchk label{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--ink);cursor:pointer;user-select:none}
+.dchk input{accent-color:var(--accent);width:15px;height:15px;margin:0;cursor:pointer}
+.tin.perm{justify-content:space-between;font-size:13px;font-weight:500;color:var(--ink);padding:7px 2px 6px 4px}
+.tcell.filled{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+@media (max-width:480px){
+  .tgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .tcell{padding:7px 7px 8px}
+  .tcell input.tinput{font-size:17px;padding:5px 6px}
+  .tcell .iconbtn{width:22px}
+  .card{padding:14px}
+  .card-h .hint{display:none}
+}
+
+.iconbtn{border:none;background:transparent;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--muted);flex:none}
+.iconbtn:hover{background:color-mix(in srgb,var(--accent2) 14%,transparent);color:var(--accent2)}
+.iconbtn svg{width:16px;height:16px}
+.iconbtn.soft:hover{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+
+.lrow{display:grid;grid-template-columns:minmax(132px,150px) 1fr auto;gap:8px;align-items:center;margin-bottom:8px}
+.lrow input.tinput{width:100%}
+.addbtn{width:100%;border:1.5px dashed var(--line);background:transparent;border-radius:12px;padding:10px;color:var(--muted);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
+.addbtn:hover:not(:disabled){border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.addbtn:disabled{opacity:.45;cursor:not-allowed}
+.addbtn svg{width:16px;height:16px}
+
+/* entries */
+.entry{border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:12px;background:var(--surface2);position:relative;transition:border-color .2s}
+.entry.is-self{border-color:var(--accent);box-shadow:inset 4px 0 0 var(--accent)}
+.entry-h{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.entry-no{font-family:"Barlow Condensed";font-weight:700;font-style:italic;font-size:20px;color:var(--muted);min-width:28px}
+.who{font-size:11px;font-weight:700;letter-spacing:.08em;padding:3px 9px;border-radius:999px;background:var(--line);color:var(--muted);max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.entry.is-self .who{background:var(--accent2);color:var(--badge-ink)}
+.rtag{display:none;font-family:"Barlow Condensed";font-style:italic;font-weight:800;font-size:12px;letter-spacing:.1em;padding:2px 8px;border-radius:6px;border:1.5px solid var(--accent);color:var(--accent)}
+.entry.is-relay .rtag{display:inline-block}
+.entry-h .acts{display:flex;gap:2px}
+.camchk{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;padding:4px 10px 4px 8px;border-radius:999px;border:1.5px solid var(--line);transition:all .15s}
+.camchk input{accent-color:#e5322d;width:15px;height:15px;margin:0;cursor:pointer}
+.camchk svg{width:15px;height:15px}
+.entry.is-cam .camchk{border-color:#e5322d;color:#e5322d;background:color-mix(in srgb,#e5322d 9%,transparent)}
+.egrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.fld{display:flex;flex-direction:column;gap:3px;min-width:0}
+.fld > input{width:100%}
+.fld small{font-size:11px;color:var(--muted);letter-spacing:.06em}
+.c-event{grid-column:span 4}.c-name{grid-column:span 2}
+.c-heat,.c-lane,.c-heats{grid-column:span 2}
+.c-start,.c-next{grid-column:span 3}
+@media (max-width:560px){.c-event,.c-name{grid-column:1/-1}}
+.ev-head{display:flex;align-items:center;gap:12px}
+.rchk{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--muted);font-weight:700;cursor:pointer;user-select:none}
+.rchk input{accent-color:var(--accent);width:15px;height:15px;margin:0;cursor:pointer}
+.ev-sel{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.3fr) minmax(0,1fr);gap:6px}
+.ev-sel select{width:100%}
+
+.subs{margin-top:10px;border-top:1px dashed var(--line);padding-top:9px}
+.subs > small{display:block;font-size:11px;color:var(--muted);letter-spacing:.06em;margin-bottom:6px}
+.sgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+@media (max-width:560px){.sgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.sub{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:4px 5px 5px}
+.sub.filled{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.sub input[type="text"]{width:100%;border:none;background:transparent;padding:2px 4px;font-size:13px;font-weight:700;color:var(--muted);border-radius:6px}
+.sub input[type="text"]:focus{box-shadow:none;background:var(--surface2);color:var(--ink)}
+.sub input.tinput{width:100%;font-size:16px;padding:3px 4px;background:var(--surface2);border-color:transparent}
+
+.calc{margin-top:10px;font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.calc b{font-family:"Barlow Condensed";font-size:22px;color:var(--ink);letter-spacing:.02em}
+.calc .arrow{color:var(--accent);font-weight:700}
+.calc .warn{color:var(--accent2);font-weight:700}
+
+/* ---------- Timeline ---------- */
+.out{background:var(--surface);border:1px solid var(--line);border-radius:22px;overflow:hidden}
+.out-h{padding:18px 18px 14px;border-bottom:1px solid var(--line);position:relative}
+.out-h .kick{font-family:"Barlow Condensed";font-style:italic;font-weight:700;letter-spacing:.16em;font-size:12px;color:var(--accent)}
+.out-h h3{margin:2px 0 0;font-size:18px;line-height:1.35;word-break:break-word}
+.out-h .date{font-family:"Barlow Condensed";font-weight:600;font-size:15px;color:var(--muted);margin-top:2px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stat{background:var(--surface2);border-radius:12px;padding:8px 10px}
+.stat small{display:block;font-size:10.5px;color:var(--muted);letter-spacing:.06em}
+.stat b{font-family:"Barlow Condensed";font-size:22px;font-weight:700;line-height:1.1}
+.stat.hl b{color:var(--accent)}
+
+.tl{list-style:none;margin:0;padding:10px 10px 14px;position:relative}
+.tl::before{content:"";position:absolute;left:102px;top:18px;bottom:18px;width:2px;
+  background:repeating-linear-gradient(180deg,var(--line) 0 6px,transparent 6px 10px)}
+.row{display:grid;grid-template-columns:80px 24px 1fr 30px;align-items:center;gap:6px;padding:8px 6px;border-radius:14px;position:relative;transition:background .15s}
+.row:hover{background:var(--surface2)}
+.row .tm{text-align:right;line-height:1;white-space:nowrap}
+.row .t{font-size:21px;font-weight:600;letter-spacing:.01em}
+.row .end{display:block;font-family:"Barlow Condensed";font-size:13px;color:var(--muted);margin-top:2px}
+.row .nd{width:24px;height:24px;border-radius:50%;background:var(--surface);border:2px solid var(--line);display:grid;place-items:center;color:var(--muted);z-index:1}
+.row .nd svg{width:12px;height:12px}
+.row .bd{min-width:0}
+.row .ti{font-weight:500;word-break:break-word}
+.row .mt{font-size:12px;color:var(--muted);word-break:break-word}
+.row .del{opacity:0;transition:opacity .15s}
+.row:hover .del,.row:focus-within .del{opacity:1}
+@media (hover:none){.row .del{opacity:.55}}
+.row.k-venue .nd{border-color:color-mix(in srgb,var(--accent) 55%,var(--line));color:var(--accent)}
+.row.k-entry .nd{border-style:dashed}
+.row.k-entry .ti{font-size:14px}
+.row.est .t::after{content:"頃";font-family:"Zen Kaku Gothic New";font-size:10px;color:var(--muted);margin-left:1px}
+.row.k-sub{padding-top:5px;padding-bottom:5px}
+.row.k-sub .t{font-size:18px;color:var(--muted)}
+.row.k-sub .nd{width:18px;height:18px;margin:0 3px;border-width:1.5px}
+.row.k-sub .nd svg{width:10px;height:10px}
+.row.k-sub .ti{font-size:13.5px}
+.row.k-sub.mine{background:linear-gradient(90deg,color-mix(in srgb,var(--accent2) 10%,transparent),transparent 70%)}
+.row.k-sub.mine .t{color:var(--ink)}
+.row.k-sub.mine .nd{border-color:var(--accent2);color:var(--accent2)}
+.row.k-sub.mine .ti{font-weight:700}
+
+.row.self{background:var(--self-bg);padding:12px 6px;margin:4px 0}
+.row.self .t{font-size:26px;font-weight:700;color:var(--ink)}
+.row.self .nd{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
+.row.self .nd svg{width:13px;height:13px}
+.row.self .ti{font-weight:700;font-size:16px}
+.row.self .mt{color:var(--ink);font-weight:500}
+.badge{display:inline-block;font-family:"Barlow Condensed";font-style:italic;font-weight:800;letter-spacing:.08em;font-size:12px;padding:1px 8px;border-radius:6px;background:var(--accent2);color:var(--badge-ink);margin-right:6px;vertical-align:2px}
+.badge.next{background:var(--accent);color:var(--accent-ink)}
+.badge.now{background:var(--ink);color:var(--surface)}
+.row.cam .nd,.row.cam.self .nd{background:#e5322d;border:2px solid #e5322d;color:#111;border-style:solid}
+.row.cam .nd svg{width:14px;height:14px;stroke-width:2.6}
+.row.past{opacity:.42}
+.row.next-up{outline:2px solid var(--accent);outline-offset:-2px}
+.tl-sec{font-size:11px;letter-spacing:.14em;color:var(--muted);font-weight:700;padding:14px 8px 4px}
+.empty{padding:36px 22px 40px;text-align:center;color:var(--muted)}
+.empty .big{font-family:"Barlow Condensed";font-style:italic;font-weight:800;font-size:44px;color:var(--line);line-height:1;letter-spacing:.04em}
+.empty p{margin:10px 0 16px;font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:500;transition:all .15s}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+.pill.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.pill.primary:hover{filter:brightness(1.08);color:var(--accent-ink)}
+.pill svg{width:16px;height:16px}
+.out-f{display:flex;gap:8px;padding:12px 16px 16px;border-top:1px solid var(--line);flex-wrap:wrap}
+.out-f .pill{flex:1;justify-content:center}
+.note{font-size:11px;color:var(--muted);padding:0 18px 14px}
+
+footer{text-align:center;font-size:11.5px;color:var(--muted);padding:10px 16px 40px;letter-spacing:.06em}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,140%);background:var(--ink);color:var(--surface);padding:11px 14px 11px 18px;border-radius:14px;font-size:13.5px;display:flex;align-items:center;gap:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);transition:transform .28s cubic-bezier(.2,.9,.3,1.2);z-index:50;width:max-content;max-width:calc(100% - 32px)}
+.toast.show{transform:translate(-50%,0)}
+.toast span{min-width:0}
+.toast button{white-space:nowrap;flex:none;border:none;background:var(--accent2);color:var(--badge-ink);border-radius:9px;padding:6px 12px;font-weight:700;font-size:12.5px}
+.toast button[hidden]{display:none}
+
+/* ---------- Time picker ---------- */
+.tinput{cursor:pointer;caret-color:transparent}
+.tp-back{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:60;display:flex;align-items:flex-end;justify-content:center;padding:12px;padding-bottom:max(12px,env(safe-area-inset-bottom))}
+.tp-back[hidden]{display:none}
+@media (min-width:600px){.tp-back{align-items:center}}
+.tp-sheet{width:100%;max-width:400px;max-height:calc(100dvh - 24px);overflow:auto;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:22px;padding:14px 14px 12px;box-shadow:0 20px 50px rgba(0,0,0,.35);animation:drop .18s ease-out}
+.tp-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tp-label{font-size:13px;font-weight:700;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tp-direct{width:118px;flex:none;text-align:center;font-size:16px!important;padding:6px 8px!important}
+.tp-disp{display:flex;align-items:center;justify-content:center;gap:4px;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:54px;line-height:1;margin:10px 0 12px}
+.tp-disp button{border:none;background:var(--surface2);border-radius:14px;padding:4px 14px;font:inherit;color:var(--muted)}
+.tp-disp button.on{color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,transparent)}
+.tp-hint{text-align:center;font-size:11px;color:var(--muted);letter-spacing:.08em;margin:-4px 0 8px}
+.tp-grid{display:grid;gap:6px}
+.tp-grid.h{grid-template-columns:repeat(6,minmax(0,1fr))}
+.tp-grid.m{grid-template-columns:repeat(4,minmax(0,1fr))}
+.tp-grid button{border:1px solid var(--line);background:var(--surface2);border-radius:10px;padding:10px 0;font-family:"Barlow Condensed",sans-serif;font-size:19px;font-weight:600;color:var(--ink)}
+.tp-grid.m button{padding:13px 0}
+.tp-grid button.sel{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tp-fine{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.tp-fine button{border:1px dashed var(--line);background:transparent;border-radius:10px;padding:8px 0;font-size:13px;font-weight:700;color:var(--muted)}
+.tp-acts{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px;margin-top:12px}
+.tp-acts button{border-radius:12px;padding:12px 0;font-weight:700;font-size:15px;border:1px solid var(--line);background:var(--surface2);color:var(--ink)}
+.tp-acts .clr{color:var(--accent2)}
+.tp-acts .ok{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+.pr-opt{display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface2);border-radius:14px;padding:12px 14px;margin-top:10px;color:var(--ink)}
+.pr-opt:hover{border-color:var(--accent)}
+.pr-opt b{display:block;font-size:15px}
+.pr-opt small{display:block;font-size:12px;color:var(--muted)}
+.pr-ic{flex:none;display:flex;gap:3px;padding:5px;border:2px solid var(--muted);border-radius:4px}
+.pr-ic.one{width:34px;height:46px}.pr-ic.two{width:52px;height:38px}
+.pr-ic i{flex:1;border-radius:2px;background:repeating-linear-gradient(180deg,var(--accent) 0 2px,transparent 2px 6px)}
+
+@media print{
+  :root,[data-theme]{--bg:#fff;--surface:#fff;--surface2:#f3f5f7;--ink:#111;--muted:#5a5a5a;--line:#cfd6db;
+    --accent:#0a7ea4;--accent-ink:#fff;--accent2:#e5522d;--badge-ink:#fff;--self-bg:#e4f3f8;--scheme:light}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{background:#fff}
+  .hero,.meet,.tabs,.panel-in,.out-f,.row .del,footer,.toast,.tp-back{display:none!important}
+  .wrap{max-width:none;padding:0}
+  .layout{display:block;margin:0}
+  body[data-tab] .panel-out{display:block!important;position:static}
+  .out{border:none;border-radius:0}
+  .row{grid-template-columns:80px 24px 1fr;break-inside:avoid}
+  .row.past{opacity:1}.row.next-up{outline:none}
+  body.print-2up .out-h{padding:0 0 6px}
+  body.print-2up .stats{display:none}
+  body.print-2up .tl{column-count:2;column-gap:10mm;column-rule:1px dashed #cfd6db;padding:4px 0}
+  body.print-2up .tl::before{display:none}
+  body.print-2up .row{grid-template-columns:58px 20px 1fr;padding:4px 4px;gap:5px}
+  body.print-2up .row .t{font-size:16px}
+  body.print-2up .row.self{padding:6px 4px;margin:2px 0}
+  body.print-2up .row.self .t{font-size:19px}
+  body.print-2up .row .nd{width:20px;height:20px}
+  body.print-2up .row .ti{font-size:12.5px}
+  body.print-2up .row .mt{font-size:10.5px}
+  body.print-2up .note{padding:4px 0 0}
+}
+</style>
+</head>
+<body data-tab="in">
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-top">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="5.5" r="2"/><path d="M3 13l5-4 4 2 4-3"/><path d="M2 18c2 0 2-1.5 4-1.5S8 18 10 18s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5"/></svg>
+        </div>
+        <div>
+          <div class="brand-name">RACE ROUTINE</div>
+          <div class="brand-sub">競泳 大会当日ルーティン</div>
+        </div>
+      </div>
+      <button class="menu-btn" id="menuBtn" data-action="menu" aria-expanded="false" aria-controls="drawer" title="メニュー">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <button class="new-btn" data-action="new" title="新しいルーティンを作成">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>新規
+      </button>
+    </div>
+
+    <div class="drawer" id="drawer" hidden>
+      <div>
+        <div class="dr-t">THEME <span class="tn" id="themeName"></span></div>
+        <div class="themes" id="themes" role="group" aria-label="テーマ"></div>
+      </div>
+      <div>
+        <div class="dr-t">DATA</div>
+        <div class="dr-actions">
+          <button class="gbtn solid" data-action="copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>テキストでコピー</button>
+          <button class="gbtn" data-action="export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>書き出し</button>
+          <button class="gbtn" data-action="import"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M4 21h16"/></svg>読み込み</button>
+        </div>
+      </div>
+      <div>
+        <div class="dr-t">REFLECTION　大会後の振り返り（ルーティンの感想）</div>
+        <textarea data-meet="reflection" placeholder="例）アップ終了から1本目まで60分は長すぎた。次回はアップを20分遅らせる。"></textarea>
+      </div>
+      <input type="file" id="fileIn" accept=".json,application/json" hidden>
+    </div>
+
+    <div class="rope" aria-hidden="true"></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- 大会名・日付（1行） -->
+  <section class="meet">
+    <input class="meet-name" type="text" data-meet="name" placeholder="大会名を入力" aria-label="大会名">
+    <label class="dchip" title="日付">
+      <span id="dShow" class="ph">日付</span>
+      <input type="date" data-meet="date" id="dateIn" aria-label="日付">
+    </label>
+  </section>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" data-action="tab" data-tab="in" aria-selected="true">入力</button>
+    <button role="tab" data-action="tab" data-tab="out" aria-selected="false">ルーティン<span class="cnt" id="tabCnt"></span></button>
+  </div>
+
+  <div class="layout">
+    <!-- 入力 -->
+    <div class="panel-in">
+      <section class="card">
+        <div class="card-h"><h2><span class="en">Schedule</span>基本スケジュール</h2><span class="hint">空欄の項目は表示されません</span></div>
+        <div id="baseArea"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-h"><h2><span class="en">Entries</span>出場種目</h2><span class="hint" id="entryCount"></span></div>
+        <div id="entryList"></div>
+        <button class="addbtn" data-action="add-entry" id="addEntryBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>種目を追加</button>
+      </section>
+
+      <section class="card">
+        <div class="card-h"><h2><span class="en">Extra</span>その他の予定</h2><span class="hint">昼食・ストレッチ・撤収など</span></div>
+        <div id="customList"></div>
+        <button class="addbtn" data-action="add-custom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>予定を追加</button>
+      </section>
+    </div>
+
+    <!-- ルーティン -->
+    <div class="panel-out">
+      <section class="out">
+        <div class="out-h" id="outHead"></div>
+        <ol class="tl" id="timeline"></ol>
+        <div class="note">※各組の時刻は「種目内で均等に進行」と仮定した目安（分未満切り捨て）です。</div>
+        <div class="out-f">
+          <button class="pill primary" data-action="copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>コピー</button>
+          <button class="pill" data-action="export">書き出し</button>
+          <button class="pill" data-action="print-menu">印刷</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer>RACE ROUTINE v2 — データはこのブラウザ内に自動保存されます</footer>
+
+<div class="tp-back" id="tp" hidden>
+  <div class="tp-sheet" role="dialog" aria-modal="true" aria-label="時刻を設定">
+    <div class="tp-top"><div class="tp-label" id="tpLabel">時刻</div>
+      <input type="text" class="tp-direct" id="tpDirect" inputmode="numeric" placeholder="直接 0830" aria-label="直接入力（例 0830）"></div>
+    <div class="tp-disp"><button id="tpH" data-tp="mode-h">08</button>:<button id="tpM" data-tp="mode-m">00</button></div>
+    <div class="tp-hint" id="tpHint">時を選択</div>
+    <div class="tp-grid" id="tpGrid"></div>
+    <div class="tp-fine"><button data-tp="d" data-d="-5">−5分</button><button data-tp="d" data-d="-1">−1分</button><button data-tp="d" data-d="1">+1分</button><button data-tp="d" data-d="5">+5分</button></div>
+    <div class="tp-acts"><button class="clr" data-tp="clear">削除</button><button data-tp="cancel">キャンセル</button><button class="ok" data-tp="ok">設定</button></div>
+  </div>
+</div>
+
+<div class="tp-back" id="pr" hidden>
+  <div class="tp-sheet" role="dialog" aria-modal="true" aria-label="印刷レイアウト">
+    <div class="tp-label">印刷レイアウト</div>
+    <button class="pr-opt" data-pr="1"><span class="pr-ic one"><i></i></span><span><b>標準</b><small>A4縦・1ページずつ</small></span></button>
+    <button class="pr-opt" data-pr="2"><span class="pr-ic two"><i></i><i></i></span><span><b>2ページ分を1枚に</b><small>A4横・左右2段組み（配布・ポケット用に）</small></span></button>
+    <div class="tp-acts" style="grid-template-columns:1fr"><button data-pr="cancel">キャンセル</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastBtn" hidden>元に戻す</button></div>
+
+<script>
+/* =========================================================
+   設定（GitHubでフォークした人がカスタマイズしやすい箇所）
+   ========================================================= */
+const CONFIG = {
+  maxEntries: 30,
+  storageKey: 'race-routine-v1',
+  themeKey: 'race-routine-theme',
+  defaultTheme: 'pool',
+  selfLabel: '自分',
+  // 個人種目の選択肢
+  individual: { sexes:['M','W'], dists:['25','50','100','200','400'], strokes:['Fr','Fly','Br','Ba','IM'] },
+  // リレーの選択肢（X = 混合）
+  relay:      { sexes:['M','W','X'], dists:['4x25','4x50','4x100','4x200'], strokes:['Fr','Med'] },
+  sexLabel:   { M:'M', W:'W', X:'X' },   // X = 混合
+  // 各種目に付く準備スケジュールの初期項目名（入力画面で変更可）
+  subItems: ['アップ','補食','トイレ','レース水着着用','招集']
+};
+
+const THEMES = [
+  { id:'pool',   name:'Pool',        sw:['#00a3c4','#5fd9cf'] },
+  { id:'night',  name:'Night Swim',  sw:['#0a2443','#35e0ff'] },
+  { id:'sunset', name:'Sunset Lane', sw:['#ff8a4c','#c24f98'] },
+  { id:'lagoon', name:'Lagoon',      sw:['#0e9f7e','#8ee0c1'] },
+  { id:'mono',   name:'Mono Racer',  sw:['#121212','#d4f522'] }
+];
+
+/* 基本スケジュール項目（rank は同時刻のときの並び順） */
+const BASE = [
+  { key:'wake',      label:'起床',             icon:'sun',   group:'朝',   rank:0 },
+  { key:'depart',    label:'出発',             icon:'go',    group:'朝',   rank:1 },
+  { key:'gather',    label:'集合',             icon:'flag',  group:'朝',   rank:2 },
+  { key:'arrive',    label:'会場到着',         icon:'pin',   group:'会場', rank:3.5, venue:true },
+  { key:'open',      label:'開場',             icon:'door',  group:'会場', rank:4, venue:true },
+  { key:'up',        label:'アップ',           icon:'wave',  group:'会場', rank:5, venue:true, range:true },
+  { key:'dash',      label:'ダッシュ専用レーン', icon:'dash', group:'会場', rank:5.5, venue:true, range:true, dash:true },
+  { key:'startPrac', label:'公式スタート練習', icon:'block', group:'会場', rank:6, venue:true, range:true },
+  { key:'compStart', label:'競技開始',         icon:'bolt',  group:'会場', rank:7, venue:true },
+  { key:'lunch',     label:'昼休み',           icon:'cup',   group:'会場', rank:8, venue:true, range:true }
+];
+
+const ICON = {
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  go:'<path d="M4 12h14M13 6l6 6-6 6"/>',
+  flag:'<path d="M5 21V4h11l-2 4 2 4H5"/>',
+  train:'<rect x="5" y="3" width="14" height="13" rx="3"/><path d="M5 10h14M8 21l2-5M16 21l-2-5"/>',
+  door:'<path d="M6 21V3h12v18M3 21h18M14 12h.01"/>',
+  wave:'<path d="M2 9c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2M2 16c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2"/>',
+  block:'<path d="M4 20h16M6 20l2-7h8l2 7M9 13V8h6v5"/>',
+  bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+  cup:'<path d="M4 8h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM17 9h2a2 2 0 0 1 0 4h-2M8 2v3M12 2v3"/>',
+  watch:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M10 2h4"/>',
+  pin:'<path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z"/><circle cx="12" cy="10" r="2"/>',
+  drop:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
+  suit:'<path d="M8 3v3c0 2 1.8 3 4 3s4-1 4-3V3M8 6c-2 4-2 9 0 15h3l1-4 1 4h3c2-6 2-11 0-15"/>',
+  dot:'<circle cx="12" cy="12" r="3"/>',
+  dash:'<path d="M3 8h7M2 12h9M3 16h7M14 6l6 6-6 6"/>',
+  camera:'<path d="M3 8h3l2-3h8l2 3h3v11H3z"/><circle cx="12" cy="13" r="3.5"/>',
+  x:'<path d="M6 6l12 12M18 6 6 18"/>',
+  trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+  dup:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/>'
+};
+const svg = (n, sw=2) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${ICON[n] || ICON.dot}</svg>`;
+function subIcon(label){
+  const l = label || '';
+  if (/アップ|ダウン/.test(l)) return 'wave';
+  if (/補食|捕食|食|ゼリー|ドリンク/.test(l)) return 'cup';
+  if (/トイレ/.test(l)) return 'drop';
+  if (/水着/.test(l)) return 'suit';
+  if (/招集/.test(l)) return 'flag';
+  return 'dot';
+}
+
+/* =========================================================
+   状態
+   ========================================================= */
+const uid = () => Math.random().toString(36).slice(2, 9);
+const defaultSubs = () => CONFIG.subItems.map(label => ({ id:uid(), label, time:'' }));
+function blankEntry(){ return { id:uid(), relay:false, camera:false, sex:'', dist:'', stroke:'', heat:'', lane:'', start:'', heats:'', next:'', name:'', subs:defaultSubs() }; }
+function blankState(){
+  const base = {}; BASE.forEach(b => base[b.key] = blankBase(b));
+  return { app:'race-routine', v:2, meet:{ name:'', date:'', reflection:'' }, base,
+           transit:[{ id:uid(), time:'', memo:'' }], entries:[], custom:[] };
+}
+function blankBase(b){ return b.dash ? { s:'', e:'', has:false, perm:false } : { s:'', e:'' }; }
+const opts = e => e.relay ? CONFIG.relay : CONFIG.individual;
+/* リレー切替時に、両方で通用する値は引き継ぐ（50 ⇔ 4x50 など） */
+function fixEvent(e){
+  const o = opts(e);
+  if (!o.sexes.includes(e.sex)) e.sex = '';
+  if (!o.dists.includes(e.dist)) {
+    const alt = e.relay ? '4x' + e.dist : String(e.dist).replace(/^4x/, '');
+    e.dist = o.dists.includes(alt) ? alt : '';
+  }
+  if (!o.strokes.includes(e.stroke)) e.stroke = '';
+}
+function normalize(d){
+  const s = blankState();
+  if (!d || typeof d !== 'object') return s;
+  const str = v => (typeof v === 'string' || typeof v === 'number') ? String(v) : '';
+  if (d.meet) for (const k of ['name','date','reflection']) s.meet[k] = str(d.meet[k]);
+  if (d.base) BASE.forEach(b => { const v = d.base[b.key]; if (v) { s.base[b.key].s = str(v.s); s.base[b.key].e = str(v.e); if (b.dash) { s.base[b.key].perm = !!v.perm; s.base[b.key].has = !!v.has || s.base[b.key].perm; } } });
+  if (Array.isArray(d.transit)) s.transit = d.transit.map(t => ({ id:uid(), time:str(t.time), memo:str(t.memo) }));
+  if (Array.isArray(d.entries)) s.entries = d.entries.slice(0, CONFIG.maxEntries).map(x => {
+    const e = { ...blankEntry(), relay:!!x.relay, camera:!!x.camera, sex:str(x.sex), dist:str(x.dist), stroke:str(x.stroke),
+      heat:str(x.heat), lane:str(x.lane), start:str(x.start), heats:str(x.heats), next:str(x.next), name:str(x.name) };
+    // 旧形式（種目名テキスト）からの変換: "M 50m Fr" / "W 4x25m Med"
+    if (!x.sex && typeof x.event === 'string') {
+      const m = x.event.trim().match(/^([MWX])\s*((?:4x)?\d+)m?\s*([A-Za-z]+)/i);
+      if (m) { e.sex = m[1].toUpperCase(); e.dist = m[2].toLowerCase(); e.stroke = m[3]; e.relay = /^4x/.test(e.dist); }
+    }
+    fixEvent(e);
+    if (Array.isArray(x.subs)) e.subs = x.subs.map(u => ({ id:uid(), label:str(u.label), time:str(u.time) }));
+    return e;
+  });
+  if (Array.isArray(d.custom)) s.custom = d.custom.map(c => ({ id:uid(), time:str(c.time), memo:str(c.memo) }));
+  return s;
+}
+function load(){
+  try { const raw = localStorage.getItem(CONFIG.storageKey); if (raw) return normalize(JSON.parse(raw)); } catch(e) {}
+  return null;   // 保存データなし＝初回起動
+}
+let state = load();
+const FIRST_RUN = !state;
+function save(){ try { localStorage.setItem(CONFIG.storageKey, JSON.stringify(state)); } catch(e) {} }
+
+/* =========================================================
+   ユーティリティ
+   ========================================================= */
+function toMin(t){ if (!t || !/^\d{1,2}:\d{2}/.test(t)) return null; const [h,m] = t.split(':').map(Number); return h*60 + m; }
+function fmt(min){ const m = Math.floor(min + 1e-6); return String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0'); }
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const WD = ['日','月','火','水','木','金','土'];
+function dateLabel(iso){
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00'); if (isNaN(d)) return iso;
+  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}（${WD[d.getDay()]}）`;
+}
+function shortDate(iso){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); if (!m) return '';
+  return `${m[1].slice(2)}/${+m[2]}/${+m[3]}`;
+}
+function todayISO(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+/* 種目名 = 性別 + 距離 + 泳法  例) M 25m Fr / X 4x25m Med */
+function evName(e){ return [e.sex, e.dist ? e.dist + 'm' : '', e.stroke].filter(Boolean).join(' '); }
+const evComplete = e => !!(e.sex && e.dist && e.stroke);
+
+/* 組の開始予定時刻 = 種目開始 + (組-1) × (次種目開始 − 種目開始) ÷ 組数 */
+function heatCalc(e){
+  const s = toMin(e.start);
+  if (s == null) return { min:null };
+  const h = parseInt(e.heat, 10), n = parseInt(e.heats, 10), nx = toMin(e.next);
+  const warns = [];
+  if (h && n && h > n) warns.push('組番号が組数を超えています');
+  if (nx != null && nx <= s) warns.push('次の種目の開始時刻が種目開始より前です');
+  if (h >= 1 && n >= 1 && nx != null && nx > s && h <= n) {
+    const per = (nx - s) / n;
+    return { min: s + (h - 1) * per, per, exact:true, warns };
+  }
+  return { min:s, exact: h === 1, fallback: !(h === 1), warns };
+}
+const isSelf = e => !e.name.trim();
+const whoLabel = e => isSelf(e) ? CONFIG.selfLabel : e.name.trim();
+
+/* =========================================================
+   入力欄の描画
+   ========================================================= */
+const $ = s => document.querySelector(s);
+function dashCell(b){
+  const v = state.base[b.key];
+  const times = v.perm
+    ? `<div class="tin perm"><span>常設（時間帯の制限なし）</span><button class="iconbtn" data-action="clear-base" data-key="${b.key}" title="クリア" aria-label="クリア">${svg('x')}</button></div>`
+    : `<div class="tin">
+        <input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-base="${b.key}" data-part="s" value="${esc(v.s)}" aria-label="${b.label} 開始">
+        <span class="dash">–</span>
+        <input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-base="${b.key}" data-part="e" value="${esc(v.e)}" aria-label="${b.label} 終了">
+        <button class="iconbtn" data-action="clear-base" data-key="${b.key}" title="クリア" aria-label="クリア">${svg('x')}</button></div>`;
+  return `<div class="tcell range ${v.has ? 'filled' : 'off'}">
+    <div class="tlab">${svg(b.icon)}${b.label}
+      <span class="dchk"><label><input type="checkbox" data-dash="has" ${v.has?'checked':''}>あり</label><label><input type="checkbox" data-dash="perm" ${v.perm?'checked':''}>常設</label></span></div>
+    ${times}</div>`;
+}
+function tcell(b){
+  if (b.dash) return dashCell(b);
+  const v = state.base[b.key];
+  return `<div class="tcell ${b.range?'range':''} ${(v.s||v.e)?'filled':''}">
+    <label>${svg(b.icon)}${b.label}</label>
+    <div class="tin">
+      <input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-base="${b.key}" data-part="s" value="${esc(v.s)}" aria-label="${b.label}${b.range?' 開始':''}">
+      ${b.range ? `<span class="dash">–</span><input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-base="${b.key}" data-part="e" value="${esc(v.e)}" aria-label="${b.label} 終了">` : ''}
+      <button class="iconbtn" data-action="clear-base" data-key="${b.key}" title="クリア" aria-label="${b.label}をクリア">${svg('x')}</button>
+    </div></div>`;
+}
+function renderBase(){
+  const g1 = BASE.filter(b => b.group === '朝').map(tcell).join('');
+  const g3 = BASE.filter(b => b.group === '会場').map(tcell).join('');
+  const tr = state.transit.map(t => `
+    <div class="lrow">
+      <input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-list="transit" data-id="${t.id}" data-field="time" value="${esc(t.time)}" aria-label="交通の出発時刻">
+      <input type="text" data-list="transit" data-id="${t.id}" data-field="memo" value="${esc(t.memo)}" placeholder="例）大阪行き新快速 3番線">
+      <button class="iconbtn" data-action="del" data-kind="transit" data-id="${t.id}" title="削除" aria-label="削除">${svg('trash')}</button>
+    </div>`).join('');
+  $('#baseArea').innerHTML = `
+    <div class="grp"><div class="grp-t">MORNING　朝</div><div class="tgrid">${g1}</div></div>
+    <div class="grp"><div class="grp-t">TRANSIT　移動</div>${tr}
+      <button class="addbtn" data-action="add-transit">${svg('train')}乗り換え・交通を追加</button></div>
+    <div class="grp"><div class="grp-t">VENUE　会場</div><div class="tgrid">${g3}</div></div>`;
+}
+function selectHTML(e, field, list, ph, labels){
+  const v = e[field];
+  return `<select class="${v?'':'empty'}" data-list="entries" data-id="${e.id}" data-field="${field}" aria-label="${ph}">
+    <option value="">${ph}</option>${list.map(x => `<option value="${x}" ${x===v?'selected':''}>${labels ? labels[x] : (field==='dist' ? x+'m' : x)}</option>`).join('')}</select>`;
+}
+function entryCard(e, i){
+  const o = opts(e);
+  return `<article class="entry ${isSelf(e)?'is-self':''} ${e.relay?'is-relay':''} ${e.camera?'is-cam':''}" data-entry="${e.id}">
+    <div class="entry-h">
+      <span class="entry-no">${String(i+1).padStart(2,'0')}</span>
+      <span class="who" data-who>${isSelf(e) ? 'YOU' : esc(e.name)}</span>
+      <span class="rtag">RELAY</span>
+      <label class="camchk" title="この泳者の撮影を担当する"><input type="checkbox" data-list="entries" data-id="${e.id}" data-field="camera" ${e.camera?'checked':''}>${svg('camera')}撮影担当</label>
+      <div class="acts">
+        <button class="iconbtn soft" data-action="dup-entry" data-id="${e.id}" title="複製（同じ種目の別の選手に）" aria-label="複製">${svg('dup')}</button>
+        <button class="iconbtn" data-action="del" data-kind="entry" data-id="${e.id}" title="削除" aria-label="削除">${svg('trash')}</button>
+      </div>
+    </div>
+    <div class="egrid">
+      <div class="fld c-event">
+        <div class="ev-head"><small>種目名</small>
+          <label class="rchk"><input type="checkbox" data-list="entries" data-id="${e.id}" data-field="relay" ${e.relay?'checked':''}>リレー</label></div>
+        <div class="ev-sel">
+          ${selectHTML(e,'sex',o.sexes,'性別',CONFIG.sexLabel)}
+          ${selectHTML(e,'dist',o.dists,'距離')}
+          ${selectHTML(e,'stroke',o.strokes,'泳法')}
+        </div>
+      </div>
+      <label class="fld c-name"><small>${e.relay ? '出場者名・チーム名' : '出場者名'}</small><input type="text" data-list="entries" data-id="${e.id}" data-field="name" value="${esc(e.name)}" placeholder="空欄＝自分"></label>
+      <label class="fld c-heat"><small>組</small><input type="number" inputmode="numeric" min="1" data-list="entries" data-id="${e.id}" data-field="heat" value="${esc(e.heat)}" placeholder="3"></label>
+      <label class="fld c-lane"><small>レーン</small><input type="number" inputmode="numeric" min="0" data-list="entries" data-id="${e.id}" data-field="lane" value="${esc(e.lane)}" placeholder="4"></label>
+      <label class="fld c-heats"><small>組数</small><input type="number" inputmode="numeric" min="1" data-list="entries" data-id="${e.id}" data-field="heats" value="${esc(e.heats)}" placeholder="10"></label>
+      <label class="fld c-start"><small>種目の競技開始</small><input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-list="entries" data-id="${e.id}" data-field="start" value="${esc(e.start)}"></label>
+      <label class="fld c-next"><small>次の種目の競技開始</small><input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-list="entries" data-id="${e.id}" data-field="next" value="${esc(e.next)}"></label>
+    </div>
+    <div class="calc" data-calc>${calcHTML(e)}</div>
+    <div class="subs">
+      <small>この種目の準備スケジュール（項目名は変更できます）</small>
+      <div class="sgrid">${e.subs.map(u => `
+        <div class="sub ${u.time?'filled':''}">
+          <input type="text" data-sub="${e.id}" data-sid="${u.id}" data-field="label" value="${esc(u.label)}" aria-label="項目名" placeholder="項目名">
+          <input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-sub="${e.id}" data-sid="${u.id}" data-field="time" value="${esc(u.time)}" aria-label="${esc(u.label)}の時刻">
+        </div>`).join('')}</div>
+    </div>
+  </article>`;
+}
+function calcHTML(e){
+  const c = heatCalc(e);
+  if (c.min == null) return '種目の競技開始時刻を入れると、組の開始予定時刻を計算します';
+  let h = `<span class="arrow">→</span><b>${fmt(c.min)}</b><span>${c.exact ? '開始予定' : '種目開始（組の時刻は組数・次種目の時刻で計算）'}</span>`;
+  if (c.per) { const sec = Math.round(c.per*60); h += `<span>／1組あたり約${Math.floor(sec/60)}分${String(sec%60).padStart(2,'0')}秒</span>`; }
+  (c.warns||[]).forEach(w => h += `<span class="warn">⚠ ${w}</span>`);
+  return h;
+}
+function renderEntries(){
+  $('#entryList').innerHTML = state.entries.map(entryCard).join('');
+  const n = state.entries.length;
+  $('#entryCount').textContent = `${n} / ${CONFIG.maxEntries}`;
+  $('#addEntryBtn').disabled = n >= CONFIG.maxEntries;
+}
+function renderCustom(){
+  $('#customList').innerHTML = state.custom.map(c => `
+    <div class="lrow">
+      <input type="text" class="tinput" readonly inputmode="none" placeholder="--:--" data-list="custom" data-id="${c.id}" data-field="time" value="${esc(c.time)}" aria-label="時刻">
+      <input type="text" data-list="custom" data-id="${c.id}" data-field="memo" value="${esc(c.memo)}" placeholder="例）昼食（おにぎり）">
+      <button class="iconbtn" data-action="del" data-kind="custom" data-id="${c.id}" title="削除" aria-label="削除">${svg('trash')}</button>
+    </div>`).join('');
+}
+function renderDate(){
+  const s = shortDate(state.meet.date), el = $('#dShow');
+  el.textContent = s || '日付'; el.classList.toggle('ph', !s);
+}
+function renderMeet(){
+  document.querySelectorAll('[data-meet]').forEach(el => el.value = state.meet[el.dataset.meet] || '');
+  renderDate();
+  $('#menuBtn').classList.toggle('has', !!state.meet.reflection.trim());
+}
+
+/* =========================================================
+   タイムライン
+   ========================================================= */
+function buildItems(){
+  const items = [], undated = [];
+  BASE.forEach(b => {
+    const v = state.base[b.key]; const s = toMin(v.s), e = toMin(v.e);
+    if (b.dash) {
+      if (!v.has) return;
+      const it = { title:b.label, icon:b.icon, kind:'base', key:b.key, rank:b.rank, venue:true };
+      if (v.perm) {
+        // 常設：アップ開始（なければ開場・会場到着）の位置に表示
+        const a = [state.base.up.s, state.base.open.s, state.base.arrive.s].map(toMin).find(x => x != null);
+        it.meta = '常設';
+        if (a == null) undated.push(it); else items.push({ ...it, min:a, time:fmt(a) });
+        return;
+      }
+      if (s == null && e == null) { undated.push({ ...it, meta:'あり（時間未入力）' }); return; }
+    }
+    if (s == null && e == null) return;
+    if (s == null) { items.push({ min:e, time:v.e, title:`${b.label} 終了`, icon:b.icon, kind:'base', key:b.key, rank:b.rank, venue:b.venue }); return; }
+    items.push({ min:s, time:v.s, end: b.range && e != null ? v.e : '', title:b.label, icon:b.icon, kind:'base', key:b.key, rank:b.rank, venue:b.venue });
+  });
+  state.transit.forEach(t => {
+    const s = toMin(t.time); if (s == null) { if (t.memo.trim()) undated.push({ title:t.memo, meta:'交通', icon:'train', kind:'transit', id:t.id }); return; }
+    items.push({ min:s, time:t.time, title: t.memo.trim() || '交通機関 出発', meta: t.memo.trim() ? '交通' : '', icon:'train', kind:'transit', id:t.id, rank:3 });
+  });
+  state.custom.forEach(c => {
+    const s = toMin(c.time); if (s == null) { if (c.memo.trim()) undated.push({ title:c.memo, icon:'pin', kind:'custom', id:c.id }); return; }
+    items.push({ min:s, time:c.time, title: c.memo.trim() || '予定', icon:'pin', kind:'custom', id:c.id, rank:9 });
+  });
+  state.entries.forEach(e => {
+    const c = heatCalc(e);
+    const name = evName(e);
+    const hl = [e.heat && `${e.heat}組`, e.lane && `${e.lane}レーン`].filter(Boolean).join(' ');
+    const it = { title: name || '（種目未選択）', meta:hl, who:whoLabel(e), self:isSelf(e), icon: e.camera ? 'camera' : 'watch', camera:e.camera, kind:'entry', id:e.id, rank:10,
+                 heat:+e.heat||0, lane:+e.lane||0, fallback:c.fallback };
+    if (c.min == null) { if (name || e.name.trim()) undated.push(it); }
+    else { it.min = c.min; it.time = fmt(c.min); it.est = c.exact && c.per != null; items.push(it); }
+    // 種目ごとの準備スケジュール
+    e.subs.forEach(u => {
+      const m = toMin(u.time); if (m == null) return;
+      items.push({ min:m, time:u.time, title:u.label.trim() || '準備', mine:isSelf(e),
+                   icon:subIcon(u.label), kind:'sub', id:e.id, sid:u.id, rank:9.5, heat:+e.heat||0, lane:+e.lane||0 });
+    });
+  });
+  items.sort((a,b) => Math.floor(a.min) - Math.floor(b.min) || a.min - b.min || a.rank - b.rank || (a.heat - b.heat) || (a.lane - b.lane));
+  return { items, undated };
+}
+
+function rowHTML(it){
+  const metaParts = [];
+  if (it.kind === 'entry') {
+    if (it.meta) metaParts.push(esc(it.meta));
+    metaParts.push(it.self ? `<strong>${esc(CONFIG.selfLabel)}</strong>` : esc(it.who));
+  } else if (it.meta) metaParts.push(esc(it.meta));
+  const cls = ['row', `k-${it.kind}`, it.venue?'k-venue':'', it.self?'self':'', it.mine?'mine':'', it.est?'est':'', it.camera?'cam':''].join(' ');
+  const badge = it.self ? '<span class="badge">YOU</span>' : '';
+  let delAttr = `data-kind="${it.kind}" data-id="${it.id}"`;
+  if (it.kind === 'base') delAttr = `data-kind="base" data-key="${it.key}"`;
+  if (it.kind === 'sub') delAttr += ` data-sid="${it.sid}"`;
+  return `<li class="${cls}">
+    <div class="tm">${it.time ? `<span class="t">${it.time}</span>` : '<span class="t">--:--</span>'}${it.end ? `<span class="end">– ${it.end}</span>` : ''}</div>
+    <div class="nd">${svg(it.icon, 2.4)}</div>
+    <div class="bd"><div class="ti">${badge}<span class="sbadge"></span>${esc(it.title)}</div>${metaParts.length ? `<div class="mt">${metaParts.join('　')}</div>` : ''}</div>
+    <button class="iconbtn del" data-action="del" ${delAttr} title="このスケジュールを削除" aria-label="削除">${svg('x')}</button>
+  </li>`;
+}
+
+function renderTimeline(){
+  const { items, undated } = buildItems();
+  const selfItems = items.filter(i => i.self);
+  const m = state.meet;
+  const wake = state.base.wake.s;
+  $('#outHead').innerHTML = `
+    <div class="kick">RACE DAY ROUTINE</div>
+    <h3>${esc(m.name) || '<span style="color:var(--muted);font-weight:500">大会名 未入力</span>'}</h3>
+    <div class="date">${dateLabel(m.date) || '日付 未入力'}</div>
+    <div class="stats">
+      <div class="stat"><small>起床</small><b>${wake || '--:--'}</b></div>
+      <div class="stat hl"><small>自分の初レース</small><b>${selfItems[0] ? selfItems[0].time : '--:--'}</b></div>
+      <div class="stat"><small>自分の出番</small><b>${selfItems.length + undated.filter(u => u.self).length}<span style="font-size:13px"> 本</span></b></div>
+    </div>`;
+  const total = items.length + undated.length;
+  $('#tabCnt').textContent = total ? total : '';
+  if (!total) {
+    $('#timeline').innerHTML = `<li class="empty"><div class="big">LANE 0</div><p>時刻を入力すると、ここに時系列でルーティンが並びます。</p></li>`;
+    return;
+  }
+  let html = items.map(rowHTML).join('');
+  if (undated.length) html += `<li class="tl-sec">時刻未定</li>` + undated.map(rowHTML).join('');
+  $('#timeline').innerHTML = html;
+  markNow(items);
+}
+
+/* 大会当日は「済み / NOW / NEXT」を表示 */
+function markNow(items){
+  if (state.meet.date !== todayISO()) return;
+  const d = new Date(); const now = d.getHours()*60 + d.getMinutes();
+  const rows = [...document.querySelectorAll('#timeline .row')];
+  let nextMarked = false;
+  items.forEach((it, idx) => {
+    const row = rows[idx]; if (!row) return;
+    const end = it.end ? toMin(it.end) : null;
+    const slot = row.querySelector('.sbadge');
+    if (end != null && it.min <= now && now < end) { slot.outerHTML = '<span class="badge now">NOW</span>'; return; }
+    if ((end ?? it.min) < now) { row.classList.add('past'); return; }
+    if (!nextMarked && it.min >= now) { nextMarked = true; row.classList.add('next-up'); slot.outerHTML = '<span class="badge next">NEXT</span>'; }
+  });
+}
+setInterval(() => { if (state.meet.date === todayISO()) renderTimeline(); }, 30000);
+
+/* =========================================================
+   テキスト出力
+   ========================================================= */
+function buildText(){
+  const { items, undated } = buildItems();
+  const m = state.meet, L = [];
+  L.push(`🏊 Race Routine｜${m.name || '（大会名未入力）'}`);
+  if (m.date) L.push(dateLabel(m.date));
+  L.push('────────────');
+  const line = it => {
+    let t = it.title;
+    if (it.end) t += `（〜${it.end}）`;
+    if (it.kind === 'entry') {
+      const mm = it.meta ? ` ${it.meta}` : '';
+      t = it.self ? `★ ${it.title}${mm}（${CONFIG.selfLabel}）` : `　 ${it.title}${mm}（${it.who}）`;
+      if (it.camera) t += ' 📷撮影担当';
+    } else if (it.kind === 'sub') {
+      t = `　・${it.title}`;
+    } else if (it.meta) t += `　${it.meta}`;
+    return `${it.time || '--:--'}  ${t}`;
+  };
+  items.forEach(it => L.push(line(it)));
+  if (undated.length) { L.push('', '［時刻未定］'); undated.forEach(it => L.push(line(it))); }
+  if (m.reflection.trim()) { L.push('────────────', '【振り返り】', m.reflection.trim()); }
+  return L.join('\n');
+}
+async function copyText(){
+  const text = buildText();
+  try { await navigator.clipboard.writeText(text); toast('ルーティンをコピーしました'); }
+  catch(e) {
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast('ルーティンをコピーしました'); } catch(_) { toast('コピーできませんでした'); }
+    ta.remove();
+  }
+}
+
+/* =========================================================
+   書き出し・読み込み
+   ========================================================= */
+function exportJSON(){
+  const data = JSON.parse(JSON.stringify(state));
+  data.exportedAt = new Date().toISOString();
+  const strip = a => a.map(({id, ...r}) => r);
+  data.transit = strip(data.transit); data.custom = strip(data.custom);
+  data.entries = data.entries.map(({id, subs, ...r}) => ({ ...r, event:evName(r), subs:strip(subs) }));
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  const safe = (state.meet.name || 'routine').replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 40);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `race-routine_${state.meet.date || todayISO()}_${safe}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast('ファイルに書き出しました');
+}
+function hasData(){
+  return !!(state.meet.name || state.entries.length || state.custom.length || BASE.some(b => state.base[b.key].s || state.base[b.key].e || state.base[b.key].has) || state.transit.some(t => t.time || t.memo));
+}
+$('#fileIn').addEventListener('change', ev => {
+  const f = ev.target.files[0]; ev.target.value = '';
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = JSON.parse(r.result);
+      if (!d || d.app !== 'race-routine') throw new Error();
+      if (hasData() && !confirm('現在のルーティンを読み込んだ内容で置き換えます。よろしいですか？')) return;
+      snapshot(); state = normalize(d); save(); renderAll();
+      toast('ルーティンを読み込みました', true);
+    } catch(e) { toast('Race Routine のファイルではないようです'); }
+  };
+  r.readAsText(f);
+});
+
+/* =========================================================
+   サンプル（初回起動時に表示。内容を変えたいときはここを差し替え）
+   ========================================================= */
+const SAMPLE = {
+ "app": "race-routine",
+ "v": 2,
+ "meet": {
+  "name": "大阪マスターズ",
+  "date": "2026-07-04",
+  "reflection": ""
+ },
+ "base": {
+  "wake": {
+   "s": "05:30",
+   "e": ""
+  },
+  "depart": {
+   "s": "06:40",
+   "e": ""
+  },
+  "gather": {
+   "s": "07:20",
+   "e": ""
+  },
+  "arrive": {
+   "s": "07:50",
+   "e": ""
+  },
+  "open": {
+   "s": "08:00",
+   "e": ""
+  },
+  "up": {
+   "s": "08:10",
+   "e": "08:50"
+  },
+  "dash": {
+   "s": "08:10",
+   "e": "08:50",
+   "has": true,
+   "perm": false
+  },
+  "startPrac": {
+   "s": "08:50",
+   "e": "09:05"
+  },
+  "compStart": {
+   "s": "09:30",
+   "e": ""
+  },
+  "lunch": {
+   "s": "12:00",
+   "e": "12:40"
+  }
+ },
+ "transit": [
+  {
+   "time": "06:52",
+   "memo": "大阪行き新快速"
+  },
+  {
+   "time": "07:28",
+   "memo": "大阪メトロ中央線 コスモスクエア行き"
+  }
+ ],
+ "entries": [
+  {
+   "relay": false,
+   "camera": false,
+   "sex": "M",
+   "dist": "50",
+   "stroke": "Fr",
+   "heat": "3",
+   "lane": "4",
+   "start": "09:30",
+   "heats": "10",
+   "next": "09:40",
+   "name": "",
+   "event": "M 50m Fr",
+   "subs": [
+    {
+     "label": "アップ",
+     "time": ""
+    },
+    {
+     "label": "補食",
+     "time": "09:05"
+    },
+    {
+     "label": "トイレ",
+     "time": "09:12"
+    },
+    {
+     "label": "レース水着着用",
+     "time": "09:15"
+    },
+    {
+     "label": "招集",
+     "time": "09:22"
+    }
+   ]
+  },
+  {
+   "relay": false,
+   "camera": true,
+   "sex": "M",
+   "dist": "50",
+   "stroke": "Fr",
+   "heat": "5",
+   "lane": "2",
+   "start": "09:30",
+   "heats": "10",
+   "next": "09:40",
+   "name": "山田",
+   "event": "M 50m Fr",
+   "subs": [
+    {
+     "label": "アップ",
+     "time": ""
+    },
+    {
+     "label": "補食",
+     "time": ""
+    },
+    {
+     "label": "トイレ",
+     "time": ""
+    },
+    {
+     "label": "レース水着着用",
+     "time": ""
+    },
+    {
+     "label": "招集",
+     "time": ""
+    }
+   ]
+  },
+  {
+   "relay": false,
+   "camera": true,
+   "sex": "W",
+   "dist": "100",
+   "stroke": "Ba",
+   "heat": "2",
+   "lane": "6",
+   "start": "10:25",
+   "heats": "6",
+   "next": "10:40",
+   "name": "佐藤",
+   "event": "W 100m Ba",
+   "subs": [
+    {
+     "label": "アップ",
+     "time": ""
+    },
+    {
+     "label": "補食",
+     "time": ""
+    },
+    {
+     "label": "トイレ",
+     "time": ""
+    },
+    {
+     "label": "レース水着着用",
+     "time": ""
+    },
+    {
+     "label": "招集",
+     "time": ""
+    }
+   ]
+  },
+  {
+   "relay": false,
+   "camera": false,
+   "sex": "M",
+   "dist": "25",
+   "stroke": "Fr",
+   "heat": "8",
+   "lane": "5",
+   "start": "13:10",
+   "heats": "12",
+   "next": "13:22",
+   "name": "",
+   "event": "M 25m Fr",
+   "subs": [
+    {
+     "label": "アップ",
+     "time": "12:20"
+    },
+    {
+     "label": "補食",
+     "time": "12:10"
+    },
+    {
+     "label": "トイレ",
+     "time": "12:50"
+    },
+    {
+     "label": "レース水着着用",
+     "time": "12:55"
+    },
+    {
+     "label": "招集",
+     "time": "13:05"
+    }
+   ]
+  },
+  {
+   "relay": true,
+   "camera": false,
+   "sex": "X",
+   "dist": "4x50",
+   "stroke": "Med",
+   "heat": "2",
+   "lane": "3",
+   "start": "14:30",
+   "heats": "4",
+   "next": "14:46",
+   "name": "",
+   "event": "X 4x50m Med",
+   "subs": [
+    {
+     "label": "アップ",
+     "time": "13:55"
+    },
+    {
+     "label": "補食",
+     "time": ""
+    },
+    {
+     "label": "トイレ",
+     "time": ""
+    },
+    {
+     "label": "レース水着着用",
+     "time": ""
+    },
+    {
+     "label": "招集",
+     "time": "14:20"
+    }
+   ]
+  }
+ ],
+ "custom": [
+  {
+   "time": "11:30",
+   "memo": "昼食（おにぎり・バナナ）"
+  },
+  {
+   "time": "15:10",
+   "memo": "ダウン・撤収"
+  }
+ ]
+};
+function sampleState(){ return normalize(JSON.parse(JSON.stringify(SAMPLE))); }
+
+/* =========================================================
+   Undo / Toast
+   ========================================================= */
+let undoSnap = null, toastTimer = null;
+function snapshot(){ undoSnap = JSON.stringify(state); }
+function toast(msg, undo=false){
+  $('#toastMsg').textContent = msg;
+  $('#toastBtn').hidden = !undo;
+  $('#toast').classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('#toast').classList.remove('show'), undo ? 5000 : 2200);
+}
+$('#toastBtn').addEventListener('click', () => {
+  if (!undoSnap) return;
+  state = normalize(JSON.parse(undoSnap)); undoSnap = null; save(); renderAll();
+  $('#toast').classList.remove('show');
+});
+
+/* =========================================================
+   イベント
+   ========================================================= */
+function findList(name, id){ return state[name].find(x => x.id === id); }
+
+document.addEventListener('input', ev => {
+  const el = ev.target;
+  if (el.dataset.meet) {
+    state.meet[el.dataset.meet] = el.value;
+    if (el.dataset.meet === 'reflection') $('#menuBtn').classList.toggle('has', !!el.value.trim());
+    if (el.dataset.meet === 'date') renderDate();
+  } else if (el.dataset.dash) {
+    const v = state.base.dash; v[el.dataset.dash] = el.checked;
+    if (v.perm) v.has = true;
+    if (!v.has) v.perm = false;
+    save(); renderBase(); renderTimeline(); return;
+  } else if (el.dataset.base) {
+    state.base[el.dataset.base][el.dataset.part] = el.value;
+    if (el.dataset.base === 'dash' && el.value && !state.base.dash.has) {
+      state.base.dash.has = true; const c = el.closest('.tcell');
+      c.classList.remove('off'); c.querySelector('[data-dash="has"]').checked = true;
+    }
+    const v = state.base[el.dataset.base];
+    el.closest('.tcell').classList.toggle('filled', !!(v.s || v.e));
+  } else if (el.dataset.sub) {
+    const e = findList('entries', el.dataset.sub); if (!e) return;
+    const u = e.subs.find(x => x.id === el.dataset.sid); if (!u) return;
+    u[el.dataset.field] = el.value;
+    el.closest('.sub').classList.toggle('filled', !!u.time);
+  } else if (el.dataset.list) {
+    const it = findList(el.dataset.list, el.dataset.id); if (!it) return;
+    if (el.dataset.field === 'relay') {
+      it.relay = el.checked; fixEvent(it); save(); renderEntries(); renderTimeline(); return;
+    }
+    if (el.dataset.field === 'camera') {
+      it.camera = el.checked; el.closest('.entry').classList.toggle('is-cam', it.camera); save(); renderTimeline(); return;
+    }
+    it[el.dataset.field] = el.value;
+    if (el.tagName === 'SELECT') el.classList.toggle('empty', !el.value);
+    if (el.dataset.list === 'entries') updateEntryCard(it);
+  } else return;
+  save(); renderTimeline();
+});
+
+/* 同じ種目の既存エントリーから、開始時刻・組数・次種目時刻を自動補完 */
+document.addEventListener('change', ev => {
+  const el = ev.target;
+  if (el.dataset.list !== 'entries' || !['sex','dist','stroke','relay'].includes(el.dataset.field)) return;
+  const it = findList('entries', el.dataset.id); if (!it || !evComplete(it)) return;
+  const name = evName(it);
+  const src = state.entries.find(x => x !== it && evName(x) === name && x.start);
+  if (!src) return;
+  const card = document.querySelector(`[data-entry="${it.id}"]`); if (!card) return;
+  let filled = false;
+  ['start','heats','next'].forEach(f => {
+    if (!it[f] && src[f]) { it[f] = src[f]; card.querySelector(`[data-field="${f}"]`).value = src[f]; filled = true; }
+  });
+  if (filled) { updateEntryCard(it); save(); renderTimeline(); toast('同じ種目の開始時刻・組数を補完しました'); }
+});
+
+/* 日付チップのタップでカレンダーを開く */
+$('#dateIn').addEventListener('click', ev => { try { ev.target.showPicker(); } catch(e) {} });
+
+function updateEntryCard(it){
+  const card = document.querySelector(`[data-entry="${it.id}"]`); if (!card) return;
+  card.classList.toggle('is-self', isSelf(it));
+  card.querySelector('[data-who]').textContent = isSelf(it) ? 'YOU' : it.name;
+  card.querySelector('[data-calc]').innerHTML = calcHTML(it);
+}
+
+document.addEventListener('click', ev => {
+  if (ev.target.matches && ev.target.matches('input.tinput')) { openPicker(ev.target); return; }
+  const b = ev.target.closest('[data-action]'); if (!b) return;
+  const a = b.dataset.action;
+  switch (a) {
+    case 'menu': {
+      const d = $('#drawer'); d.hidden = !d.hidden;
+      b.setAttribute('aria-expanded', String(!d.hidden)); break;
+    }
+    case 'copy': copyText(); break;
+    case 'export': exportJSON(); break;
+    case 'import': $('#fileIn').click(); break;
+    case 'print-menu': $('#pr').hidden = false; break;
+    case 'new':
+      if (hasData() && !confirm('新しいルーティンを作成します。現在の内容は消えます（必要なら先に書き出しを）。')) return;
+      snapshot(); state = blankState(); save(); renderAll(); toast('新規ルーティンを作成しました', true); break;
+    case 'tab': setTab(b.dataset.tab); break;
+    case 'theme': setTheme(b.dataset.theme); break;
+    case 'add-transit':
+      state.transit.push({ id:uid(), time:'', memo:'' }); save(); renderBase();
+      focusLast('[data-list="transit"][data-field="time"]'); break;
+    case 'add-custom':
+      state.custom.push({ id:uid(), time:'', memo:'' }); save(); renderCustom();
+      focusLast('[data-list="custom"][data-field="time"]'); break;
+    case 'add-entry': {
+      if (state.entries.length >= CONFIG.maxEntries) return;
+      const e = blankEntry(); state.entries.push(e);
+      save(); renderEntries(); renderTimeline();
+      const el = document.querySelector(`[data-entry="${e.id}"] select`); el && el.focus(); break;
+    }
+    case 'dup-entry': {
+      if (state.entries.length >= CONFIG.maxEntries) { toast(`種目は最大${CONFIG.maxEntries}件です`); return; }
+      const i = state.entries.findIndex(x => x.id === b.dataset.id); if (i < 0) return;
+      const src = state.entries[i];
+      const copy = { ...src, id:uid(), camera:false, heat:'', lane:'', name:'', subs: src.subs.map(u => ({ id:uid(), label:u.label, time:'' })) };
+      state.entries.splice(i + 1, 0, copy); save(); renderEntries(); renderTimeline();
+      const el = document.querySelector(`[data-entry="${copy.id}"] [data-field="heat"]`); el && el.focus();
+      toast('種目を複製しました（組・レーン・名前を入力）'); break;
+    }
+    case 'clear-base': {
+      const k = b.dataset.key; snapshot(); state.base[k] = blankBase(BASE.find(x => x.key === k)); save(); renderBase(); renderTimeline(); break;
+    }
+    case 'del': deleteItem(b.dataset.kind, b.dataset.id, b.dataset.key, b.dataset.sid); break;
+  }
+});
+
+function deleteItem(kind, id, key, sid){
+  snapshot();
+  let label = '';
+  if (kind === 'base') { const bd = BASE.find(b => b.key === key); label = bd.label; state.base[key] = blankBase(bd); }
+  else if (kind === 'transit') { state.transit = state.transit.filter(x => x.id !== id); label = '交通'; }
+  else if (kind === 'custom') { state.custom = state.custom.filter(x => x.id !== id); label = '予定'; }
+  else if (kind === 'entry') { const e = findList('entries', id); label = (e && evName(e)) || '種目'; state.entries = state.entries.filter(x => x.id !== id); }
+  else if (kind === 'sub') { const e = findList('entries', id); const u = e && e.subs.find(x => x.id === sid); if (u) { label = u.label || '準備'; u.time = ''; } }
+  save(); renderAll(false);
+  toast(`「${label}」を削除しました`, true);
+}
+function focusLast(sel){ const els = document.querySelectorAll(sel); const el = els[els.length - 1]; el && el.focus(); }
+
+/* =========================================================
+   時刻ピッカー（OS標準ダイアログは端末の表示サイズ設定で見切れるため自前で実装）
+   ========================================================= */
+const tp = { el:null, h:8, m:0, mode:'h' };
+let lastPicked = null;
+const p2 = n => String(n).padStart(2,'0');
+function openPicker(el){
+  tp.el = el;
+  const v = el.value;
+  if (/^\d{1,2}:\d{2}$/.test(v)) [tp.h, tp.m] = v.split(':').map(Number);
+  else if (lastPicked) [tp.h, tp.m] = lastPicked;
+  else { tp.h = 8; tp.m = 0; }
+  tp.mode = 'h';
+  $('#tpLabel').textContent = el.getAttribute('aria-label') || '時刻';
+  $('#tpDirect').value = '';
+  drawTP();
+  $('#tp').hidden = false;
+  if (matchMedia('(pointer:fine)').matches) $('#tpDirect').focus();
+}
+function drawTP(){
+  $('#tpH').textContent = p2(tp.h); $('#tpM').textContent = p2(tp.m);
+  $('#tpH').classList.toggle('on', tp.mode === 'h'); $('#tpM').classList.toggle('on', tp.mode === 'm');
+  $('#tpHint').textContent = tp.mode === 'h' ? '時を選択' : '分を選択（細かくは ±1分）';
+  const g = $('#tpGrid'); g.className = 'tp-grid ' + tp.mode;
+  const vals = tp.mode === 'h' ? [...Array(24).keys()] : [...Array(12).keys()].map(i => i*5);
+  const cur = tp.mode === 'h' ? tp.h : tp.m;
+  g.innerHTML = vals.map(v => `<button data-tp="pick" data-v="${v}" class="${v===cur?'sel':''}">${p2(v)}</button>`).join('');
+}
+function closeTP(){ $('#tp').hidden = true; if (tp.el) tp.el.focus({ preventScroll:true }); tp.el = null; }
+function commitTP(val){
+  const el = tp.el; if (!el) return;
+  el.value = val;
+  if (val) lastPicked = [tp.h, tp.m];
+  el.dispatchEvent(new Event('input', { bubbles:true }));
+  el.dispatchEvent(new Event('change', { bubbles:true }));
+  closeTP();
+}
+$('#tp').addEventListener('click', ev => {
+  if (ev.target.id === 'tp') { closeTP(); return; }
+  const b = ev.target.closest('[data-tp]'); if (!b) return;
+  const a = b.dataset.tp;
+  if (a === 'mode-h') tp.mode = 'h';
+  else if (a === 'mode-m') tp.mode = 'm';
+  else if (a === 'pick') { const v = +b.dataset.v; if (tp.mode === 'h') { tp.h = v; tp.mode = 'm'; } else tp.m = v; }
+  else if (a === 'd') { const t = (tp.h*60 + tp.m + (+b.dataset.d) + 1440) % 1440; tp.h = Math.floor(t/60); tp.m = t % 60; tp.mode = 'm'; }
+  else if (a === 'clear') return commitTP('');
+  else if (a === 'cancel') return closeTP();
+  else if (a === 'ok') return commitTP(`${p2(tp.h)}:${p2(tp.m)}`);
+  drawTP();
+});
+$('#tpDirect').addEventListener('input', ev => {
+  const d = ev.target.value.replace(/\D/g, '');
+  if (d.length < 3) return;
+  const h = +d.slice(0, -2), m = +d.slice(-2, d.length >= 4 ? 4 : undefined);
+  if (h < 24 && m < 60) { tp.h = h; tp.m = m; tp.mode = 'm'; drawTP(); }
+});
+$('#tpDirect').addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); commitTP(`${p2(tp.h)}:${p2(tp.m)}`); } });
+document.addEventListener('keydown', ev => {
+  if (ev.key === 'Escape' && !$('#tp').hidden) closeTP();
+  if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches && ev.target.matches('input.tinput')) { ev.preventDefault(); openPicker(ev.target); }
+});
+
+/* =========================================================
+   印刷（標準 / 2ページ分を1枚に）
+   ========================================================= */
+function doPrint(mode){
+  $('#pageStyle').textContent = mode === 2 ? '@page{size:A4 landscape;margin:10mm}' : '@page{size:A4 portrait;margin:12mm}';
+  document.body.classList.toggle('print-2up', mode === 2);
+  $('#pr').hidden = true;
+  setTimeout(() => window.print(), 60);
+}
+window.addEventListener('afterprint', () => document.body.classList.remove('print-2up'));
+$('#pr').addEventListener('click', ev => {
+  if (ev.target.id === 'pr') { $('#pr').hidden = true; return; }
+  const b = ev.target.closest('[data-pr]'); if (!b) return;
+  if (b.dataset.pr === 'cancel') { $('#pr').hidden = true; return; }
+  doPrint(+b.dataset.pr);
+});
+
+/* =========================================================
+   テーマ / タブ
+   ========================================================= */
+function renderThemes(){
+  const cur = document.documentElement.dataset.theme;
+  $('#themes').innerHTML = THEMES.map(t =>
+    `<button class="swatch" data-action="theme" data-theme="${t.id}" title="${t.name}" aria-label="テーマ ${t.name}" aria-pressed="${t.id===cur}">
+       <span style="background:linear-gradient(135deg,${t.sw[0]} 0 50%,${t.sw[1]} 50% 100%)"></span></button>`).join('');
+  $('#themeName').textContent = (THEMES.find(t => t.id === cur) || {}).name || '';
+}
+function setTheme(id){
+  if (!THEMES.some(t => t.id === id)) id = CONFIG.defaultTheme;
+  document.documentElement.dataset.theme = id;
+  try { localStorage.setItem(CONFIG.themeKey, id); } catch(e) {}
+  document.querySelector('meta[name="theme-color"]').content = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+  renderThemes();
+}
+function setTab(t){
+  document.body.dataset.tab = t;
+  document.querySelectorAll('.tabs [data-tab]').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
+  window.scrollTo({ top: document.querySelector('.tabs').offsetTop - 10, behavior:'smooth' });
+}
+
+/* =========================================================
+   初期化
+   ========================================================= */
+function renderAll(withMeet = true){
+  if (withMeet) renderMeet();
+  renderBase(); renderEntries(); renderCustom(); renderTimeline();
+}
+(function init(){
+  let th = CONFIG.defaultTheme; try { th = localStorage.getItem(CONFIG.themeKey) || th; } catch(e) {}
+  setTheme(th);
+  if (FIRST_RUN) { state = sampleState(); save(); }
+  renderAll();
+})();
+</script>
+</body>
+</html>
