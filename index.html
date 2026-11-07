@@ -21,7 +21,7 @@
 <style id="pageStyle">@page{size:A4 portrait;margin:12mm}</style>
 <style>
 /* =========================================================
-   Race Routine v3
+   Race Routine v3b
    テーマはここで定義。新しいテーマを足すときは
    [data-theme="xxx"] ブロックと、JS の THEMES に1行追加。
    ========================================================= */
@@ -297,16 +297,16 @@ select.empty{color:var(--muted);font-family:"Zen Kaku Gothic New";font-size:14px
 .row.k-sub.mine .nd{border-color:var(--accent2);color:var(--accent2)}
 .row.k-sub.mine .ti{font-weight:700}
 
-.row.self{background:var(--self-bg);padding:12px 6px;margin:4px 0}
-.row.self .t{font-size:26px;font-weight:700;color:var(--ink)}
-.row.self .nd{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
-.row.self .nd svg{width:13px;height:13px}
-.row.self .ti{font-weight:700;font-size:16px}
-.row.self .mt{color:var(--ink);font-weight:500}
+.row.race{background:var(--self-bg);padding:12px 6px;margin:4px 0}
+.row.race .t{font-size:26px;font-weight:700;color:var(--ink)}
+.row.race .nd{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
+.row.race .nd svg{width:13px;height:13px}
+.row.race .ti{font-weight:700;font-size:16px}
+.row.race .mt{color:var(--ink);font-weight:500}
 .badge{display:inline-block;font-family:"Barlow Condensed";font-style:italic;font-weight:800;letter-spacing:.08em;font-size:12px;padding:1px 8px;border-radius:6px;background:var(--accent2);color:var(--badge-ink);margin-right:6px;vertical-align:2px}
 .badge.next{background:var(--accent);color:var(--accent-ink)}
 .badge.now{background:var(--ink);color:var(--surface)}
-.row.cam .nd,.row.cam.self .nd{background:#e5322d;border:2px solid #e5322d;color:#111;border-style:solid}
+.row.cam .nd,.row.cam.race .nd{background:#e5322d;border:2px solid #e5322d;color:#111;border-style:solid}
 .row.cam .nd svg{width:14px;height:14px;stroke-width:2.6}
 .row.past{opacity:.42}
 .row.next-up{outline:2px solid var(--accent);outline-offset:-2px}
@@ -363,33 +363,49 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:10px 16px 4
 .pr-opt b{display:block;font-size:15px}
 .pr-opt small{display:block;font-size:12px;color:var(--muted)}
 .pr-ic{flex:none;display:flex;gap:3px;padding:5px;border:2px solid var(--muted);border-radius:4px}
-.pr-ic.one{width:34px;height:46px}.pr-ic.two{width:52px;height:38px}
+.pr-ic.one{width:36px;height:48px}.pr-ic.two{width:60px;height:42px}
 .pr-ic i{flex:1;border-radius:2px;background:repeating-linear-gradient(180deg,var(--accent) 0 2px,transparent 2px 6px)}
 
+/* ---------- 印刷用ページ（JSで行を詰めてページを組む） ---------- */
+.pr-root{position:absolute;left:-10000px;top:0;visibility:hidden;background:#fff;color:#111;
+  --bg:#fff;--surface:#fff;--surface2:#f3f5f7;--ink:#111;--muted:#5a5a5a;--line:#cfd6db;
+  --accent:#0a7ea4;--accent-ink:#fff;--accent2:#e5522d;--badge-ink:#fff;--self-bg:#e4f3f8}
+.pr-root *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pr-page{overflow:hidden;background:#fff}
+.pr-head{padding:0 0 6px;margin-bottom:6px;border-bottom:1px solid #cfd6db}
+.pr-head .kick{font-family:"Barlow Condensed";font-style:italic;font-weight:700;letter-spacing:.16em;font-size:11px;color:var(--accent)}
+.pr-head h3{margin:1px 0 0;font-size:17px;line-height:1.3}
+.pr-head .date{font-family:"Barlow Condensed";font-weight:600;font-size:13px;color:#5a5a5a}
+.pr-head .vmemo{margin-top:3px;font-size:11.5px}
+.pr-cols{display:grid;grid-template-columns:1fr 1fr;column-gap:10mm;position:relative}
+.pr-cols::after{content:"";position:absolute;top:0;bottom:0;left:50%;border-left:1px dashed #cfd6db}
+.pr-col{list-style:none;margin:0;padding:0;position:relative;min-width:0}
+.pr-col::before{content:"";position:absolute;left:76px;top:6px;bottom:6px;width:1.5px;background:repeating-linear-gradient(180deg,#cfd6db 0 5px,transparent 5px 9px)}
+.pr-col:empty::before{display:none}
+.pr-root .row{grid-template-columns:58px 20px 1fr;padding:4px;gap:5px;border-radius:10px}
+.pr-root .row:hover{background:transparent}
+.pr-root .row .del{display:none}
+.pr-root .row .t{font-size:16px}
+.pr-root .row .end{font-size:11.5px}
+.pr-root .row .nd{width:20px;height:20px}
+.pr-root .row .ti{font-size:12.5px}
+.pr-root .row .mt{font-size:10.5px}
+.pr-root .row.race{padding:6px 4px;margin:2px 0;background:var(--self-bg)}
+.pr-root .row.race .t{font-size:19px}
+.pr-root .row.race .ti{font-size:13.5px}
+.pr-root .row.k-sub{padding-top:3px;padding-bottom:3px}
+.pr-root .row.k-sub .t{font-size:14.5px}
+.pr-root .row.past{opacity:1}.pr-root .row.next-up{outline:none}
+.pr-root .tl-sec{padding:8px 4px 2px;font-size:10px}
+.pr-note{font-size:10px;color:#5a5a5a;padding:6px 4px 0}
+.pr-sheet.two{display:flex;justify-content:space-between;align-items:flex-start}
+
 @media print{
-  :root,[data-theme]{--bg:#fff;--surface:#fff;--surface2:#f3f5f7;--ink:#111;--muted:#5a5a5a;--line:#cfd6db;
-    --accent:#0a7ea4;--accent-ink:#fff;--accent2:#e5522d;--badge-ink:#fff;--self-bg:#e4f3f8;--scheme:light}
-  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body{background:#fff}
-  .hero,.meet,.tabs,.panel-in,.out-f,.row .del,footer,.toast,.tp-back{display:none!important}
-  .wrap{max-width:none;padding:0}
-  .layout{display:block;margin:0}
-  body[data-tab] .panel-out{display:block!important;position:static}
-  .out{border:none;border-radius:0}
-  .row{grid-template-columns:80px 24px 1fr;break-inside:avoid}
-  .row.past{opacity:1}.row.next-up{outline:none}
-  body.print-2up .out-h{padding:0 0 6px}
-  body.print-2up .stats{display:none}
-  body.print-2up .tl{column-count:2;column-gap:10mm;column-rule:1px dashed #cfd6db;padding:4px 0}
-  body.print-2up .tl::before{display:none}
-  body.print-2up .row{grid-template-columns:58px 20px 1fr;padding:4px 4px;gap:5px}
-  body.print-2up .row .t{font-size:16px}
-  body.print-2up .row.self{padding:6px 4px;margin:2px 0}
-  body.print-2up .row.self .t{font-size:19px}
-  body.print-2up .row .nd{width:20px;height:20px}
-  body.print-2up .row .ti{font-size:12.5px}
-  body.print-2up .row .mt{font-size:10.5px}
-  body.print-2up .note{padding:4px 0 0}
+  body > *:not(#printRoot){display:none!important}
+  #printRoot{position:static;left:auto;visibility:visible}
+  .pr-sheet{break-after:page;page-break-after:always}
+  .pr-sheet:last-child{break-after:auto;page-break-after:auto}
 }
 </style>
 </head>
@@ -502,7 +518,7 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:10px 16px 4
   </div>
 </div>
 
-<footer>RACE ROUTINE v3 — データはこのブラウザ内に自動保存されます</footer>
+<footer>RACE ROUTINE v3b — データはこのブラウザ内に自動保存されます</footer>
 
 <div class="tp-back" id="tp" hidden>
   <div class="tp-sheet" role="dialog" aria-modal="true" aria-label="時刻を設定">
@@ -519,8 +535,8 @@ footer{text-align:center;font-size:11.5px;color:var(--muted);padding:10px 16px 4
 <div class="tp-back" id="pr" hidden>
   <div class="tp-sheet" role="dialog" aria-modal="true" aria-label="印刷レイアウト">
     <div class="tp-label">印刷レイアウト</div>
-    <button class="pr-opt" data-pr="1"><span class="pr-ic one"><i></i></span><span><b>標準</b><small>A4縦・1ページずつ</small></span></button>
-    <button class="pr-opt" data-pr="2"><span class="pr-ic two"><i></i><i></i></span><span><b>2ページ分を1枚に</b><small>A4横・左右2段組み（配布・ポケット用に）</small></span></button>
+    <button class="pr-opt" data-pr="1"><span class="pr-ic one"><i></i><i></i></span><span><b>標準</b><small>A4縦・2段組み（左の列から順に流し込み）</small></span></button>
+    <button class="pr-opt" data-pr="2"><span class="pr-ic two"><i></i><i></i><i></i><i></i></span><span><b>2ページ分を1枚に</b><small>A4横・標準のページを縮小して2ページ分を並べる</small></span></button>
     <div class="tp-acts" style="grid-template-columns:1fr"><button data-pr="cancel">キャンセル</button></div>
   </div>
 </div>
@@ -912,7 +928,7 @@ function rowHTML(it){
     if (it.meta) metaParts.push(esc(it.meta));
     metaParts.push(it.self ? `<strong>${esc(CONFIG.selfLabel)}</strong>` : esc(it.who));
   } else if (it.meta) metaParts.push(esc(it.meta));
-  const cls = ['row', `k-${it.kind}`, it.venue?'k-venue':'', it.self?'self':'', it.mine?'mine':'', it.est?'est':'', it.camera?'cam':''].join(' ');
+  const cls = ['row', `k-${it.kind}`, it.venue?'k-venue':'', it.kind==='entry'?'race':'', it.self?'self':'', it.mine?'mine':'', it.est?'est':'', it.camera?'cam':''].join(' ');
   const badge = it.self ? '<span class="badge">YOU</span>' : '';
   let delAttr = `data-kind="${it.kind}" data-id="${it.id}"`;
   if (it.kind === 'base') delAttr = `data-kind="base" data-key="${it.key}"`;
@@ -1537,13 +1553,63 @@ document.addEventListener('keydown', ev => {
 /* =========================================================
    印刷（標準 / 2ページ分を1枚に）
    ========================================================= */
+/* 普通の文書と同じ流し込み：左の列を下まで埋めてから右の列へ、次にページを送る。
+   「2ページ分を1枚に」は、そのA4縦ページを縮小してA4横に2枚並べる（Nアップ印刷と同じ）。 */
+const MM = 96 / 25.4;
+const PAGE = { w: Math.floor(186 * MM), h: Math.floor(273 * MM) - 14 };   // A4縦・余白12mmの印刷範囲（少し余裕を残す）
+const SHEET2 = { w: Math.floor(277 * MM), h: Math.floor(190 * MM) };     // A4横・余白10mm
+function buildPrint(mode){
+  let root = $('#printRoot');
+  if (!root) { root = document.createElement('div'); root.id = 'printRoot'; document.body.appendChild(root); }
+  root.className = 'pr-root';
+  const m = state.meet;
+  const head = `<div class="pr-head"><div class="kick">RACE DAY ROUTINE</div><h3>${esc(m.name) || '大会名 未入力'}</h3>
+    <div class="date">${dateLabel(m.date)}</div>${m.memo.trim() ? `<div class="vmemo">${svg('note')}<span>${esc(m.memo)}</span></div>` : ''}</div>`;
+  const items = [...document.querySelectorAll('#timeline > li')]
+    .filter(li => !li.classList.contains('empty')).map(li => li.outerHTML);
+  items.push('<li class="pr-note">※各組の時刻は「種目内で均等に進行」と仮定した目安（分未満切り捨て）です。</li>');
+
+  // 実際の列幅で各行の高さを測る
+  const gap = 10 * MM, colW = Math.floor((PAGE.w - gap) / 2);
+  root.innerHTML = `<div style="width:${PAGE.w}px">${head}</div><ol class="pr-col" style="width:${colW}px">${items.join('')}</ol>`;
+  const headH = root.firstElementChild.offsetHeight;
+  const lis = [...root.querySelectorAll('.pr-col > li')];
+  const hs = lis.map(li => { const cs = getComputedStyle(li); return li.offsetHeight + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom); });
+  const isSec = lis.map(li => li.classList.contains('tl-sec'));
+
+  // 流し込み
+  const pages = []; let page = [[], []], col = 0, used = 0, cap = PAGE.h - headH;
+  const advance = () => { col++; used = 0; if (col > 1) { pages.push(page); page = [[], []]; col = 0; cap = PAGE.h; } };
+  items.forEach((html, i) => {
+    const need = hs[i] + (isSec[i] && i + 1 < items.length ? hs[i + 1] : 0);   // 見出しだけが列末に残らないように
+    if (used > 0 && used + need > cap) advance();
+    page[col].push(html); used += hs[i];
+  });
+  pages.push(page);
+
+  const pageHTML = (p, i, style) => `<div class="pr-page" style="${style}">${i === 0 ? head : ''}
+    <div class="pr-cols"><ol class="pr-col">${p[0].join('')}</ol><ol class="pr-col">${p[1].join('')}</ol></div></div>`;
+  let html = '';
+  if (mode === 2) {
+    const z = Math.min(SHEET2.h / (PAGE.h + 14), (SHEET2.w - 8 * MM) / 2 / PAGE.w);
+    const st = `width:${PAGE.w}px;height:${PAGE.h}px;zoom:${z.toFixed(3)}`;
+    for (let i = 0; i < pages.length; i += 2) {
+      html += `<div class="pr-sheet two">${pageHTML(pages[i], i, st)}${pages[i + 1] ? pageHTML(pages[i + 1], i + 1, st) : `<div class="pr-page" style="${st}"></div>`}</div>`;
+    }
+  } else {
+    html = pages.map((p, i) => `<div class="pr-sheet">${pageHTML(p, i, `width:${PAGE.w}px`)}</div>`).join('');
+  }
+  root.innerHTML = html;
+  root.querySelectorAll('.badge.now,.badge.next').forEach(b => b.remove());
+  return pages.length;
+}
 function doPrint(mode){
   $('#pageStyle').textContent = mode === 2 ? '@page{size:A4 landscape;margin:10mm}' : '@page{size:A4 portrait;margin:12mm}';
-  document.body.classList.toggle('print-2up', mode === 2);
+  buildPrint(mode);
   $('#pr').hidden = true;
-  setTimeout(() => window.print(), 60);
+  setTimeout(() => window.print(), 80);
 }
-window.addEventListener('afterprint', () => document.body.classList.remove('print-2up'));
+window.addEventListener('afterprint', () => { const r = $('#printRoot'); if (r) r.innerHTML = ''; });
 $('#pr').addEventListener('click', ev => {
   if (ev.target.id === 'pr') { $('#pr').hidden = true; return; }
   const b = ev.target.closest('[data-pr]'); if (!b) return;
